@@ -10,6 +10,10 @@ export function debug(message?: any, ...optionalParams: any[]): void {
     }
 }
 
+function escapeRegExp(s: string): string {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 export type Config = {
     insert: string,
     detectors: string[],
@@ -24,19 +28,19 @@ export function read(): Config {
 
     const insert = cfg.get<string>("Picker.InsertAfterPick")||"";
     const detectors = cfg.get<string[]>("Preview.MatchPatterns")||[];
-    const langs = cfg.get<string>("Filter.ApplyInTheseLanguages")||"";
-    const files = cfg.get<string>("Filter.ApplyInTheseFiles")||"";
+    const langs = cfg.get<string>("Filter.ApplyForTheseLanguages")||"";
+    const files = cfg.get<string>("Filter.ApplyForTheseFiles")||"";
 
     let detectRegexs: RegExp[] = [];
     for (let i = 0; i < detectors.length; i++) {
         const d = detectors[i];
-        const re = new RegExp('(?<=\\W)'+ d.replace(/[RGBAW]/g, "([0-9a-fA-F])") + '(?=\\W)', 'g');
+        const re = new RegExp('(?<=\\W)'+ escapeRegExp(d).replace(/[RGBAW]/g, "([0-9a-fA-F])") + '(?=\\W)', 'g');
         detectRegexs[i] = re;
     }
     let insertRegexs: RegExp[] = [];
     for (let i = 0; i < detectors.length; i++) {
         const d = detectors[i];
-        const re = new RegExp('^'+ d.replace(/[RGBAW]/g, "([0-9a-fA-F])") + '$');
+        const re = new RegExp('^'+ escapeRegExp(d).replace(/[RGBAW]/g, "([0-9a-fA-F])") + '$');
         insertRegexs[i] = re;
     }
 

@@ -1,4 +1,4 @@
 /.build
 /node_modules
-/res
 /vsc-extension-quickstart.md
+/src/test

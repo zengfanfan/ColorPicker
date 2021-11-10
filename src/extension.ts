@@ -7,21 +7,17 @@ import * as picker from './picker';
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated
 	config.debug(config.name + " is active.");
-
-    let cfg = config.read();
-	picker.activate(cfg);
+	picker.activate(config.read());
 
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
 	// The commandId parameter must match the command field in package.json
 	let disposable = vscode.commands.registerCommand(config.id + ".run", () => {
 		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
 		vscode.window.showInformationMessage("Running " + config.name + " ...");
+		picker.activate(config.read());
 	});
 
 	context.subscriptions.push(disposable);

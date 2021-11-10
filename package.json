@@ -1,85 +1,94 @@
 {
   "name": "zeng-color-picker",
-	"displayName": "Zeng's Color Picker",
-	"description": "A Zeng-style color picker, which supports (a)rgb and grayscale.\nYou can custom the color format easily.\nYou can also specify a file filter by language or path.",
-	"keywords":["zeng", "color", "colour", "picker"],
-	"publisher": "zengfanfan",
-	"icon": "res/icon.png",
-	"version": "0.0.1",
-	"engines": {
-		"vscode": "^1.50.1"
-	},
-	"categories": [
-		"Other"
-	],
-	"activationEvents": [
-		"onStartupFinished"
-	],
-	"main": "./.build/extension.js",
-	"contributes": {
-		"commands": [
-			{
-				"command": "zeng-color-picker.run",
-				"title": "(Re)Run Zeng's Color Picker"
-			}
-		],
-		"configuration": {
-			"title": "Zeng's Color Picker",
-			"properties": {
-				"zeng-color-picker.Filter.ApplyInTheseLanguages": {
-					"type":"string",
-					"default":"html,css,javascript,typescript,xml",
-					"description":""
-				},
-				"zeng-color-picker.Filter.ApplyInTheseFiles": {
-					"type":"string",
-					"default":"TODO **/*.txt",
-					"markdownDescription":"A [glob pattern](https://code.visualstudio.com/api/references/vscode-api#GlobPattern) that is matched on the absolute path of the document, separated by space."
-				},
-				"zeng-color-picker.Preview.MatchPatterns": {
-					"type":"array",
-					"items":{
-						"type":"string"
-					},
-					"default":["#RRGGBB", "#RGB", "gray(\"W\")"],
-					"markdownDescription": "Use `UPPER` letters(R,G,B,A,W) to indicate hex color components(red, green, blue, alpha, grayscale). \n\n- Similiar items, such as *RGBA* and *ARGB*, will confuse the detector, hence should be avoided. \n\n- The **order** in the list matters."
-				},
-				"zeng-color-picker.Picker.InsertAfterPick": {
-					"type": "string",
-					"default": "",
-					"markdownDescription": "Same rule as `#zeng-color-picker.Preview.MatchPatterns#`. \n\nLeave blank to let it guess, which is `recommended`."
-				}
-			}
-		}
-	},
-	"scripts": {
-		"vscode:prepublish": "npm run esbuild-base -- --minify",
-		"esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node",
-		"esbuild": "npm run esbuild-base -- --sourcemap",
-		"esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
-		"test-compile": "tsc -p ./",
-		"compile": "tsc -p ./",
-		"watch": "tsc -watch -p ./",
-		"pretest": "npm run compile && npm run lint",
-		"lint": "eslint src --ext ts",
-		"test": "node ./.build/test/runTest.js"
-	},
-	"devDependencies": {
-		"@types/vscode": "^1.58.2",
-		"@types/glob": "^7.1.4",
-		"@types/mocha": "^9.0.0",
-		"@types/node": "14.x",
-		"@typescript-eslint/eslint-plugin": "^4.31.1",
-		"@typescript-eslint/parser": "^4.31.1",
-		"eslint": "^7.32.0",
-		"glob": "^7.1.7",
-		"mocha": "^9.1.1",
-		"typescript": "^4.4.3",
-		"@vscode/test-electron": "^1.6.2"
-	},
-	"license": "GPLv3",
-	"bugs": {
-		"url": "http://zengfanfan.com"
-	},
-	"homepage": "http://zengfanfan.com"
+  "displayName": "Zeng's Color Picker",
+  "description": "A Zeng-style color picker, which supports (a)rgb and grayscale.\nYou can custom the color format easily.\nYou can also specify a file filter by language or path.",
+  "keywords": [
+    "zeng",
+    "color",
+    "colour",
+    "picker"
+  ],
+  "publisher": "zengfanfan",
+  "icon": "res/icon.png",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.58.2"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./.build/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "zeng-color-picker.run",
+        "title": "(Re)Run Zeng's Color Picker"
+      }
+    ],
+    "configuration": {
+      "title": "Zeng's Color Picker",
+      "properties": {
+        "zeng-color-picker.Filter.ApplyForTheseLanguages": {
+          "type": "string",
+          "default": "html,css,javascript,typescript,xml",
+          "description": ""
+        },
+        "zeng-color-picker.Filter.ApplyForTheseFiles": {
+          "type": "string",
+          "default": "TODO **/*.txt",
+          "markdownDescription": "A [glob pattern](https://code.visualstudio.com/api/references/vscode-api#GlobPattern) that is matched on the absolute path of the document, separated by space."
+        },
+        "zeng-color-picker.Preview.MatchPatterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "#RRGGBB",
+            "#RGB",
+            "gray(\"W\")"
+          ],
+          "markdownDescription": "Use `UPPER` letters(R,G,B,A,W) to indicate hex color components(red, green, blue, alpha, grayscale). \n\n- Similiar items, such as *RGBA* and *ARGB*, will confuse the detector, hence should be avoided. \n\n- The **order** in the list matters."
+        },
+        "zeng-color-picker.Picker.InsertAfterPick": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Same rule as `#zeng-color-picker.Preview.MatchPatterns#`. \n\nLeave blank to let it guess, which is `recommended`."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run esbuild-base -- --minify",
+    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=.build/main.js --external:vscode --format=cjs --platform=node",
+    "esbuild": "npm run esbuild-base -- --sourcemap",
+    "esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./.build/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/glob": "^7.1.4",
+    "@types/mocha": "^9.0.0",
+    "@types/node": "14.x",
+    "@types/vscode": "^1.58.2",
+    "@typescript-eslint/eslint-plugin": "^4.31.1",
+    "@typescript-eslint/parser": "^4.31.1",
+    "@vscode/test-electron": "^1.6.2",
+    "esbuild": "^0.13.13",
+    "eslint": "^7.32.0",
+    "glob": "^7.1.7",
+    "mocha": "^9.1.1",
+    "typescript": "^4.4.3"
+  },
+  "license": "GPLv3",
+  "bugs": {
+    "url": "https://github.com/zengfanfan/zeng-color-picker/issues"
+  },
+  "homepage": "https://github.com/zengfanfan/zeng-color-picker"
 }
