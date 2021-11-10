@@ -4,3 +4,4 @@
 /src/test
 /res/*.psd
 /res/vscode_access_token.txt
+/*.vsix
