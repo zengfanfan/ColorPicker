@@ -1,6 +1,8 @@
 # Zeng's Color Picker
 
 This color picker is a extension of vscode.
+
+
 ![icon](res/icon.png)
 
 ## Features
@@ -26,4 +28,3 @@ This extension contributes the following settings:
 ## Release Notes
 
 See [ChangeLog](CHANGELOG.md).
-

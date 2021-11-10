@@ -10,17 +10,6 @@ export function activate(context: vscode.ExtensionContext) {
 	// This line of code will only be executed once when your extension is activated
 	config.debug(config.name + " is active.");
 	picker.activate(config.read());
-
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	let disposable = vscode.commands.registerCommand(config.id + ".run", () => {
-		// The code you place here will be executed every time your command is executed
-		vscode.window.showInformationMessage("Running " + config.name + " ...");
-		picker.activate(config.read());
-	});
-
-	context.subscriptions.push(disposable);
 }
 
 // this method is called when your extension is deactivated
