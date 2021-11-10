@@ -1,0 +1,140 @@
+/*
+ * Author: Zeng Fanfan
+ * 2016-7-1
+ */
+/* PSEUDO: scrollbar */
+::-webkit-scrollbar{
+    background-color:#eee;
+    width:9px;
+}
+::-webkit-scrollbar-track{
+    background-color:#eee;
+}
+::-webkit-scrollbar-thumb{
+    background-color:#3c8dbc;
+}
+
+::-moz-scrollbar{
+    background-color:#eee;
+    width:9px;
+}
+::-moz-scrollbar-track{
+    background-color:#eee;
+}
+::-moz-scrollbar-thumb{
+    background-color:#3c8dbc;
+}
+
+/*
+ * data table style
+ */
+table.table-hover > tbody > tr:hover{
+    background:#dff;
+}
+
+.bootstrap-table .page-list ul.dropdown-menu{
+    padding: 0;
+    border: 1px solid #ccc;
+}
+.bootstrap-table .table:not(.table-condensed) > thead > tr{
+    background:#666;
+    color:#fff;
+}
+.fixed-table-container .bs-checkbox .th-inner{
+    padding: 5px 0;
+}
+table.data-list .data-mdf{
+    padding-right: 5px;
+    color: #999;
+    font-size:80%;
+}
+table.data-list .data-mdf:hover{
+    color:#09c;
+}
+table.data-list .data-rm{
+    padding-left: 5px;
+    color: #999;
+    font-size:80%;
+}
+table.data-list .data-rm:hover{
+    color:#f33;
+}
+/* default */
+.btn-default.btn-outline{
+    background:transparent;
+    color:#666;
+    border:1px solid #aaa;
+}
+.btn-default.btn-outline:hover{
+    background:#aaa;
+    color:#fff;
+    border:1px solid #aaa;
+}
+/* primary */
+.btn-primary.btn-outline{
+    color:#367fa9;
+    border:1px solid #367fa9;
+}
+.btn-primary.btn-outline:hover{
+    color:rgba(255,255,255,0.7);
+}
+.form-control{
+    border-color:#bbb;
+}
+red{
+    color:#f00;
+}
+
+/*
+ * BOX style
+ */
+.box-panel{
+    margin:15px;
+    margin-bottom:0;
+    width:auto;
+    border-top:3px solid #ddd;
+}
+.box-header.with-border{
+    border-bottom:1px solid #eee;
+}
+
+.daterangepicker{
+    border:1px solid #ddd;
+    background:#f9f9f9;
+}
+
+/* warning-header */
+.noscript, .ie{
+    z-index: 999 !important;
+    text-align:center !important;
+    font-weight:bold !important;
+    font-size:120% !important;
+    background-color:#ae0000 !important;
+    color:#fff !important;
+    display:block;
+}
+.noscript a, .ie a{
+    color: #6c6;
+}
+.noscript a:hover, .ie a:hover{
+    background-color: #6c6;
+    color: #f00;
+}
+
+.shadow{
+    filter:
+        Dropshadow(offx=1,offy=1,color=#999999)
+        Dropshadow(offx=1,offy=-1,color=#999999)
+        Dropshadow(offx=-1,offy=1,color=#999999)
+        Dropshadow(offx=-1,offy=-1,color=#999999);/* IE */
+    text-shadow:1px 1px 1px #000000;/* IE 9, FIREFOX CHROME */
+    -webkit-filter: drop-shadow(0 0 4px #666666);
+    -ms-filter:"progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000')";/* IE 8 */
+    filter: progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000'); /* IE<8 */
+}
+#nav_login a, #nav_logout i{
+    color: #696!important;
+}
+#nav_logout a, #nav_logout i{
+    color: #d00!important;
+}

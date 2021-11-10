@@ -1,0 +1,48 @@
+function red(s)
+    return color("f00", s)
+end
+function green(s)
+    return color("0f0", s)
+end
+function blue(s)
+    return color("00f", s)
+end
+function orange(s)
+    return color("f80", s)
+end
+function yellow(s)
+    return color("11e", s)
+end
+function cyan(s)
+    return color("0ff", s)
+end
+function purple(s)
+    return color("90f", s)
+end
+function pink(s)
+    return color("f9f", s)
+end
+function white(s)
+    return color("f", s)
+end
+function black(s)
+    return color("0", s)
+end
+function gray(s)
+    return color("a", s)
+end
+function lightgray(s)
+    return color("f", s)
+end
+function lightblue(s)
+    return color("0cf", s)
+end
+function skyblue(s)
+    return color("39f", s)
+end
+function darkred(s)
+    return color("900", s)
+end
+function CHK(k)
+    return color("fc0", k)
+end
