@@ -1,0 +1,10 @@
+1. BUILD the package: vsce package
+- may have to install vsce first: npm i vsce -g
+2. if you don't have a personal access token, go here: https://aka.ms/SignupAzureDevOps.
+choose "All accessible organizations" and "Full access" when creating.
+3. if you dont have a publisher, create one: https://marketplace.visualstudio.com/manage
+4. PUBLISH: vsce publish
+- publish minor version: vsce publish minor (autoincrease 1.0.2 -> 1.1.0)
+- publish patch version: vsce publish patch (autoincrease 1.0.2 -> 1.0.3)
+- version components: major.minor.patch
+5. unpublish: vsce unpublish (publisher name).(extension name)
