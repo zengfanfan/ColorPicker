@@ -9,9 +9,14 @@ export function debug(message?: any, ...optionalParams: any[]): void {
         console.log(message, ...optionalParams);
     }
 }
+export function toast(message: string, ...items: string[]): void {
+    if (!release) {
+        vscode.window.showInformationMessage(message, ...items);
+    }
+}
 
 function escapeRegExp(s: string): string {
-    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace('!', '(?=(^|\\b|$))');
 }
 
 export type Config = {
@@ -33,14 +38,14 @@ export function read(): Config {
 
     let detectRegexs: RegExp[] = [];
     for (let i = 0; i < detectors.length; i++) {
-        const d = detectors[i];
-        const re = new RegExp('(?<=\\W)'+ escapeRegExp(d).replace(/[RGBAW]/g, "([0-9a-fA-F])") + '(?=\\W)', 'g');
+        const d = escapeRegExp(detectors[i]);
+        const re = new RegExp(d.replace(/[RGBAW]/g, "([0-9a-fA-F])"), 'g');
         detectRegexs[i] = re;
     }
     let insertRegexs: RegExp[] = [];
     for (let i = 0; i < detectors.length; i++) {
-        const d = detectors[i];
-        const re = new RegExp('^'+ escapeRegExp(d).replace(/[RGBAW]/g, "([0-9a-fA-F])") + '$');
+        const d = escapeRegExp(detectors[i]);
+        const re = new RegExp('^'+ d.replace(/[RGBAW]/g, "([0-9a-fA-F])") + '$');
         insertRegexs[i] = re;
     }
 

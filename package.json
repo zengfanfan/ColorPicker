@@ -10,7 +10,7 @@
   ],
   "publisher": "zengfanfan",
   "icon": "res/icon.png",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.58.2"
   },
@@ -18,18 +18,11 @@
     "Other"
   ],
   "activationEvents": [
-    "onStartupFinished",
-    "onCommand:zeng-color-picker.run",
-    "onDidChangeConfiguration"
+    "onStartupFinished"
   ],
   "main": "./.build/extension.js",
   "contributes": {
-    "commands": [
-      {
-        "command": "zeng-color-picker.run",
-        "title": "(Re)Run Zeng's Color Picker"
-      }
-    ],
+    "commands": [],
     "configuration": {
       "title": "Zeng's Color Picker",
       "properties": {
@@ -49,11 +42,11 @@
             "type": "string"
           },
           "default": [
-            "#RRGGBB",
-            "#RGB",
+            "#RRGGBB!",
+            "#RGB!",
             "gray(\"W\")"
           ],
-          "markdownDescription": "Use `UPPER` letters(R,G,B,A,W) to indicate hex color components(red, green, blue, alpha, grayscale). \n\n- Similiar items, such as *RGBA* and *ARGB*, will confuse the detector, hence should be avoided. \n\n- The **order** in the list matters."
+          "markdownDescription": "Use `UPPER` letters(R,G,B,A,W) to indicate hex color components(red, green, blue, alpha, grayscale); use sigh mark (!) to announce a word boundary. \n\n- Similiar items, such as *RGBA* and *ARGB*, will confuse the detector, hence should be avoided. \n\n- The **order** in the list matters."
         },
         "zeng-color-picker.Picker.InsertAfterPick": {
           "type": "string",

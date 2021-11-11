@@ -115,6 +115,8 @@ function vscolor2str(color: vscode.Color, text: string, cfg: config.Config): str
                 ret += ws[0];
                 ws = ws.substr(1);
                 break;
+            case '!':
+                break;
             default:
                 ret += c;
                 break;
@@ -170,11 +172,9 @@ let listeners:vscode.Disposable[] = [];
 
 export function activate(cfg: config.Config) {
     for (const file of cfg.files) {
-        // config.debug("reg file: " + file);
         listeners.push(vscode.languages.registerColorProvider({pattern: file}, new ColorProvider));
     }
     for (const lang of cfg.langs) {
-        // config.debug("reg lang: " + lang);
         listeners.push(vscode.languages.registerColorProvider(lang, new ColorProvider));
     }
 }

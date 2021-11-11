@@ -9,7 +9,14 @@ import * as picker from './picker';
 export function activate(context: vscode.ExtensionContext) {
 	// This line of code will only be executed once when your extension is activated
 	config.debug(config.name + " is active.");
+	config.toast(config.name + " is active.");
 	picker.activate(config.read());
+	// Apply settings as soon as changed.
+	let dispose = vscode.workspace.onDidChangeConfiguration(()=>{
+		picker.deactivate();
+		picker.activate(config.read());
+	});
+	context.subscriptions.push(dispose);
 }
 
 // this method is called when your extension is deactivated
