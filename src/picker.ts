@@ -1,12 +1,15 @@
 import * as vscode from 'vscode';
 import * as config from './config';
 
+const MAX_LINENO = 2**30; // about infinity
+let cfg: config.Config;
+
 function int2hex(i: number, width: number = 2): string {
     let ret = i.toString(16);
     if (ret.length < width) {
         ret = '0'.repeat(width - ret.length) + ret;
     }
-    return ret.substr(0, width);
+    return ret.substring(0, width);
 }
 
 function rgba2gray(r: number, g: number, b: number, a: number): number {
@@ -49,17 +52,17 @@ function line2colorinfos(lineno: number, text: string, cfg: config.Config): vsco
             }
             // calculate color components
             let [r,g,b,a,w] = [0,0,0,255,0];
-            if (rs) { r = +("0x" + (rs+rs+'0').substr(0,2)); }
-            if (gs) { g = +("0x" + (gs+gs+'0').substr(0,2)); }
-            if (bs) { b = +("0x" + (bs+bs+'0').substr(0,2)); }
-            if (as) { a = +("0x" + (as+as+'0').substr(0,2)); }
-            if (ws) { w = +("0x" + (ws+ws+'0').substr(0,2)); }
+            if (rs) { r = +("0x" + (rs+rs+'0').substring(0,2)); }
+            if (gs) { g = +("0x" + (gs+gs+'0').substring(0,2)); }
+            if (bs) { b = +("0x" + (bs+bs+'0').substring(0,2)); }
+            if (as) { a = +("0x" + (as+as+'0').substring(0,2)); }
+            if (ws) { w = +("0x" + (ws+ws+'0').substring(0,2)); }
             // assemble
-            config.debug(`[${detector}] ${match[0]} => ${r},${g},${b},${a},${w} [${rs}/${gs}/${bs}/${as}/${ws}]`);
+            // config.debug(`[${detector}] ${match[0]} => ${r},${g},${b},${a},${w} [${rs}/${gs}/${bs}/${as}/${ws}]`);
             if (w) {// grayscale conquer others
                 [r,b,g,a] = gray2rgba(w);
             }
-            let from =  match.index||0;
+            let from = match.index||0;
             ret.push(new vscode.ColorInformation(
                 new vscode.Range(lineno, from, lineno, from + match[0].length),
                 new vscode.Color(r/255.0, g/255.0, b/255.0, a/255.0)
@@ -72,7 +75,7 @@ function line2colorinfos(lineno: number, text: string, cfg: config.Config): vsco
 
 function vscolor2str(color: vscode.Color, text: string, cfg: config.Config): string|null {
     const [ri, gi, bi, ai] = [color.red*255, color.green*255, color.blue*255, color.alpha*255];
-    const wi = rgba2gray(ri, gi,bi,ai);
+    const wi = rgba2gray(ri,gi,bi,ai);
     let [rs, gs, bs, as, ws] = [int2hex(ri), int2hex(gi), int2hex(bi), int2hex(ai), int2hex(wi)];
     let insert = cfg.insert;
 
@@ -97,23 +100,23 @@ function vscolor2str(color: vscode.Color, text: string, cfg: config.Config): str
         switch (c) {
             case 'R':
                 ret += rs[0];
-                rs = rs.substr(1);
+                rs = rs.substring(1);
                 break;
             case 'G':
                 ret += gs[0];
-                gs = gs.substr(1);
+                gs = gs.substring(1);
                 break;
             case 'B':
                 ret += bs[0];
-                bs = bs.substr(1);
+                bs = bs.substring(1);
                 break;
             case 'A':
                 ret += as[0];
-                as = as.substr(1);
+                as = as.substring(1);
                 break;
             case 'W':
                 ret += ws[0];
-                ws = ws.substr(1);
+                ws = ws.substring(1);
                 break;
             case '!':
                 break;
@@ -123,25 +126,33 @@ function vscolor2str(color: vscode.Color, text: string, cfg: config.Config): str
         }
     }
 
-    config.debug(`${text} => ${ret}`);
+    // config.debug(`${text} => ${ret}`);
     return ret;
 }
 
 class ColorProvider implements vscode.DocumentColorProvider
 {
+    private from = 0;
+    private to = MAX_LINENO;
+    constructor(from?: number, to?: number) { // from & to: lineno, specify ranges
+        this.from = from || this.from;
+        this.to = to || this.to;
+    }
+
     // preview color in the editor
     provideDocumentColors(
         document: vscode.TextDocument,
         token: vscode.CancellationToken
     ): vscode.ProviderResult<vscode.ColorInformation[]>
     {
-        const cfg = config.read();
         let colors:vscode.ColorInformation[] = [];
         for (let i = 0; i < document.lineCount; ++i) {
-            let line = document.lineAt(i).text;
-            colors = colors.concat(line2colorinfos(i, line, cfg));
+            if (i>this.from && i <this.to) {
+                let line = document.lineAt(i).text;
+                colors = colors.concat(line2colorinfos(i, line, cfg));
+            }
         }
-        return colors;
+        return colors; // <= 500, see https://github.com/microsoft/vscode/issues/44615#issuecomment-396497187
     }
 
     // insert string after pick
@@ -152,8 +163,6 @@ class ColorProvider implements vscode.DocumentColorProvider
         ): vscode.ProviderResult<vscode.ColorPresentation[]>
     {
         let text = context.document.getText(context.range);
-
-        const cfg = config.read();
         let clrstr: string|null = null;
         if (text) {
             clrstr = vscolor2str(color, text, cfg);
@@ -168,19 +177,50 @@ class ColorProvider implements vscode.DocumentColorProvider
 
 // init and deinit
 
+let listener0:vscode.Disposable;
 let listeners:vscode.Disposable[] = [];
+let last_visible_start = -1;
+const ANTI_SHAKE = 20;
 
-export function activate(cfg: config.Config) {
+function updateColorProvider() {
+    let range = vscode.window.activeTextEditor?.visibleRanges[0];
+    if (!range) { return; }
+    const from = range.start.line;
+    const to = range.end.line;
+    if (Math.abs(from-last_visible_start) < ANTI_SHAKE) { return; }
+    last_visible_start = from;
+    // update: re-register color provider
+    for (const listener of listeners) {
+        listener.dispose();
+    }
+    listeners = [];
+    let cp = new ColorProvider(from-ANTI_SHAKE, to+ANTI_SHAKE);
     for (const file of cfg.files) {
-        listeners.push(vscode.languages.registerColorProvider({pattern: file}, new ColorProvider));
+        listeners.push(vscode.languages.registerColorProvider({pattern: file}, cp));
     }
-    for (const lang of cfg.langs) {
-        listeners.push(vscode.languages.registerColorProvider(lang, new ColorProvider));
-    }
+    listeners.push(vscode.languages.registerColorProvider(cfg.langs, cp));
+}
+
+export function activate() {
+    cfg = config.read();
+    updateColorProvider();
+    listener0 = vscode.window.onDidChangeTextEditorVisibleRanges((event)=>{
+        let editor = event.textEditor;
+        // file filter
+        let matched = vscode.languages.match(cfg.langs, editor.document) > 0;
+        for (const file of cfg.files) {
+            matched=matched || vscode.languages.match({pattern: file}, editor.document) > 0;
+            if (matched) { break; }
+        }
+        if (!matched) { return; }
+        // update
+        updateColorProvider();
+    });
 }
 
 export function deactivate() {
     for (const listener of listeners) {
         listener.dispose();
     }
+    listener0.dispose();
 }

@@ -10,7 +10,7 @@
   ],
   "publisher": "zengfanfan",
   "icon": "res/icon.png",
-  "version": "0.0.2",
+  "version": "0.0.8",
   "engines": {
     "vscode": "^1.58.2"
   },
@@ -80,12 +80,12 @@
   },
   "license": "See LICENSE.txt",
   "bugs": {
-    "url": "https://github.com/zengfanfan/zeng-color-picker/issues"
+    "url": "https://github.com/zengfanfan/ColorPicker/issues"
   },
-  "homepage": "https://github.com/zengfanfan/zeng-color-picker",
+  "homepage": "https://github.com/zengfanfan/ColorPicker",
   "author":"Zeng Fanfan",
   "repository":{
     "type": "git",
-    "url": "https://github.com/zengfanfan/zeng-color-picker.git"
+    "url": "https://github.com/zengfanfan/ColorPicker.git"
   }
 }

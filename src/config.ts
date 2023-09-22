@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 
 export const name = "Zeng's Color-picker";
 export const id = "zeng-color-picker";
-export const release = true;
+export const release = true;// turn on(false) or off(true) debug message
 
 export function debug(message?: any, ...optionalParams: any[]): void {
     if (!release) {
@@ -16,6 +16,7 @@ export function toast(message: string, ...items: string[]): void {
 }
 
 function escapeRegExp(s: string): string {
+    // $&: matched part
     return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace('!', '(?=(^|\\b|$))');
 }
 

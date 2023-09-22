@@ -1,3 +1,5 @@
+--- PUBLISH FIRST-TIME
+
 1. BUILD the package: vsce package
 - may have to install vsce first: npm i vsce -g
 2. if you don't have a personal access token, go here: https://aka.ms/SignupAzureDevOps.
@@ -8,3 +10,13 @@ choose "All accessible organizations" and "Full access" when creating.
 - publish patch version: vsce publish patch (autoincrease 1.0.2 -> 1.0.3)
 - version components: major.minor.patch
 5. unpublish: vsce unpublish (publisher name).(extension name)
+
+--- PUBLISH UPGRADE
+
+1. vsce package
+2. if personal access token is expired, do 2a&2b
+2a. create personal access token, go here: https://aka.ms/SignupAzureDevOps.
+choose "All accessible organizations" and "Full access" when creating.
+2b. run cmd: vsce login <publisher-name>
+-- with the token generated on previous step.
+3. run cmd: vsce publish

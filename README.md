@@ -2,7 +2,7 @@
 
 This color picker is an extension of vscode.
 
-![icon](res/icon.png)
+If you encounter any problem, please [let us know](https://github.com/zengfanfan/ColorPicker/issues).
 
 ## Features
 
@@ -12,8 +12,6 @@ This color picker is an extension of vscode.
 
 ![screenshot_1](res/screenshot_1.png)
 ![screenshot_2](res/screenshot_2.png)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
 
 ## Settings
 
