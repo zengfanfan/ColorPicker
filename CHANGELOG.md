@@ -2,6 +2,10 @@
 
 All notable changes to the extension will be documented in this file.
 
+### 0.0.9 - 2023-10-13
+
+1. fix issue: picker may not shown when some code were folded
+
 ### 0.0.8 - 2023-9-23
 
 1. fix issue #1 (Color picker works only for a section of a file)

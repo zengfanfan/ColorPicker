@@ -10,7 +10,7 @@
   ],
   "publisher": "zengfanfan",
   "icon": "res/icon.png",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "engines": {
     "vscode": "^1.58.2"
   },
@@ -57,12 +57,12 @@
     }
   },
   "scripts": {
-	"vscode:prepublish": "npm run compile",
-	"compile": "tsc -p ./",
-	"watch": "tsc -watch -p ./",
-	"pretest": "npm run compile && npm run lint",
-	"lint": "eslint src --ext ts",
-	"test": "node ./.build/test/runTest.js"
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./.build/test/runTest.js"
   },
   "devDependencies": {
     "@types/glob": "^7.1.4",
@@ -83,8 +83,8 @@
     "url": "https://github.com/zengfanfan/ColorPicker/issues"
   },
   "homepage": "https://github.com/zengfanfan/ColorPicker",
-  "author":"Zeng Fanfan",
-  "repository":{
+  "author": "Zeng Fanfan",
+  "repository": {
     "type": "git",
     "url": "https://github.com/zengfanfan/ColorPicker.git"
   }

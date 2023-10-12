@@ -178,17 +178,18 @@ class ColorProvider implements vscode.DocumentColorProvider
 // init and deinit
 
 let listener0:vscode.Disposable;
+let listener1:vscode.Disposable;
 let listeners:vscode.Disposable[] = [];
-let last_visible_start = -1;
 const ANTI_SHAKE = 20;
+let last_vstart = -ANTI_SHAKE-999;
 
-function updateColorProvider() {
-    let range = vscode.window.activeTextEditor?.visibleRanges[0];
-    if (!range) { return; }
-    const from = range.start.line;
-    const to = range.end.line;
-    if (Math.abs(from-last_visible_start) < ANTI_SHAKE) { return; }
-    last_visible_start = from;
+function updateColorProvider(force: boolean = false) {
+    let ranges = vscode.window.activeTextEditor?.visibleRanges ?? [];
+    const range0 = ranges[0], rangeN = ranges[ranges.length-1];
+    if (!range0 || !rangeN) { return; }
+    const from = range0.start.line, to = rangeN.end.line;
+    if (!force && Math.abs(from-last_vstart) < ANTI_SHAKE/2) { return; }
+    last_vstart = from;
     // update: re-register color provider
     for (const listener of listeners) {
         listener.dispose();
@@ -216,6 +217,9 @@ export function activate() {
         // update
         updateColorProvider();
     });
+    listener1 = vscode.window.onDidChangeActiveTextEditor(event=>{
+        updateColorProvider(true);
+    });
 }
 
 export function deactivate() {
@@ -223,4 +227,5 @@ export function deactivate() {
         listener.dispose();
     }
     listener0.dispose();
+    listener1.dispose();
 }
