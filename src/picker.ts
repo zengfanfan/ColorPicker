@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import * as config from './config';
 
-const MAX_LINENO = 2**30; // about infinity
 let cfg: config.Config;
 
 function int2hex(i: number, width: number = 2): string {
@@ -133,7 +132,7 @@ function vscolor2str(color: vscode.Color, text: string, cfg: config.Config): str
 class ColorProvider implements vscode.DocumentColorProvider
 {
     private from = 0;
-    private to = MAX_LINENO;
+    private to = Infinity;
     constructor(from?: number, to?: number) { // from & to: lineno, specify ranges
         this.from = from || this.from;
         this.to = to || this.to;

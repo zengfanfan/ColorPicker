@@ -1,4 +1,4 @@
-# Zeng's Color Picker
+# Color Picker
 
 This color picker is an extension of vscode.
 

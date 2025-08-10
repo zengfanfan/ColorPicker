@@ -2,6 +2,10 @@
 
 All notable changes to the extension will be documented in this file.
 
+### 1.0.0 - 2025-8-11
+
+1. Publish to OpenVSX
+
 ### 0.0.9 - 2023-10-13
 
 1. fix issue: picker may not shown when some code were folded

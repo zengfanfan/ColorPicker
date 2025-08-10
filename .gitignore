@@ -5,3 +5,5 @@
 /res/*.psd
 /res/vscode_access_token.txt
 /*.vsix
+package-lock.json
+yarn.lock
