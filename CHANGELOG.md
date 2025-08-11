@@ -2,6 +2,10 @@
 
 All notable changes to the extension will be documented in this file.
 
+### 1.1.0 - 2025-8-11
+
+1. Add support for RGB(A) and HSL(A) format
+
 ### 1.0.0 - 2025-8-11
 
 1. Publish to OpenVSX

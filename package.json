@@ -10,7 +10,7 @@
   ],
   "publisher": "zengfanfan",
   "icon": "res/icon.png",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "engines": {
     "vscode": "^1.58.2"
   },
@@ -24,7 +24,7 @@
   "contributes": {
     "commands": [],
     "configuration": {
-      "title": "Zeng's Color Picker",
+      "title": "RGBA Color Picker",
       "properties": {
         "zeng-color-picker.Filter.ApplyForTheseLanguages": {
           "type": "string",
@@ -35,6 +35,16 @@
           "type": "string",
           "default": "TODO **/*.txt",
           "markdownDescription": "A [glob pattern](https://code.visualstudio.com/api/references/vscode-api#GlobPattern) that is matched on the absolute path of the document, separated by space."
+        },
+        "zeng-color-picker.Preview.DetectRGBA": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Detect CSS style `rgba(int, int, int, float)` or `rgb(int, int, int)`."
+        },
+        "zeng-color-picker.Preview.DetectHSLA": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Detect CSS style `hsla(int, %, %, float)` or `hsl(int, %, %)`."
         },
         "zeng-color-picker.Preview.MatchPatterns": {
           "type": "array",

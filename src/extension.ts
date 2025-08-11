@@ -12,7 +12,7 @@ export function activate(context: vscode.ExtensionContext) {
 	config.toast(config.name + " is active.");
 	picker.activate();
 	// Apply settings as soon as changed.
-	let dispose = vscode.workspace.onDidChangeConfiguration(()=>{
+	let dispose = vscode.workspace.onDidChangeConfiguration(() => {
 		picker.deactivate();
 		picker.activate();
 	});
