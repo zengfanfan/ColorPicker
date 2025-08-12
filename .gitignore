@@ -2,7 +2,6 @@
 /node_modules
 /vsc-extension-quickstart.md
 /src/test
-/res/*.psd
 /res/vscode_access_token.txt
 /*.vsix
 package-lock.json

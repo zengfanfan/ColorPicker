@@ -4,6 +4,8 @@
   "description": "A flexible color picker, which supports (a)rgb and grayscale. You can custom the color format easily. You can also specify a file filter by language or path.",
   "keywords": [
     "zeng",
+    "RGBA",
+    "ARGB",
     "color",
     "colour",
     "picker"
