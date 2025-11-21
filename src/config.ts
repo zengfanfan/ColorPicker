@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 
 export const name = "Zeng's Color-picker";
 export const id = "zeng-color-picker";
-export const release = true;// turn on(false) or off(true) debug message
+export const release = false;// turn on(false) or off(true) debug message
 
 export function debug(message?: any, ...optionalParams: any[]): void {
     if (!release) {
@@ -20,52 +20,63 @@ function escapeRegExp(s: string): string {
     return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace('!', '(?=(^|\\b|$))');
 }
 
+export type Component = {
+    name: string,
+    type: string,
+    min: number,
+    max: number,
+};
+
 export type Config = {
     insert: string,
-    detectRGBA: boolean,
-    detectHSLA: boolean,
     detectors: string[],
     detectRegexs: RegExp[],
-    insertRegexs: RegExp[],
+    insertRegexs: RegExp[], // used to guess when inserting
+    components: Component[][], // paired with {detectors} and matched groups
     langs: string[],
     files: string[],
 };
 
+const reDetector = /R+|G+|B+|A+|W+|H+|S+|L+|[rgbawhsl](?<type>[if%]+)((?<min>(\\\+|-)?[0-9]+(\\\.[0-9]+)?)~(?<max>(\\\+|-)?[0-9]+(\\\.[0-9]+)?))?/g;
 export function read(): Config {
     const cfg = vscode.workspace.getConfiguration("zeng-color-picker");
-
     const insert = cfg.get<string>("Picker.InsertAfterPick") || "";
     const detectors = cfg.get<string[]>("Preview.MatchPatterns") || [];
     const langs = cfg.get<string>("Filter.ApplyForTheseLanguages") || "";
     const files = cfg.get<string>("Filter.ApplyForTheseFiles") || "";
-    const detectRGBA = cfg.get<boolean>("Preview.DetectRGBA") || true;
-    const detectHSLA = cfg.get<boolean>("Preview.DetectHSLA") || true;
 
     let detectRegexs: RegExp[] = [];
-    for (let i = 0; i < detectors.length; i++) {
-        const d = escapeRegExp(detectors[i]);
-        const re = new RegExp(d.replace(/[RGBAW]/g, "([0-9a-fA-F])"), 'g');
-        detectRegexs[i] = re;
-    }
     let insertRegexs: RegExp[] = [];
+    let components: Component[][] = [];
     for (let i = 0; i < detectors.length; i++) {
-        const d = escapeRegExp(detectors[i]);
-        const re = new RegExp('^' + d.replace(/[RGBAW]/g, "([0-9a-fA-F])") + '$');
-        insertRegexs[i] = re;
-    }
-
-    let langlist = [];
-    for (const lang of langs.split(',')) {
-        if (lang) {
-            langlist.push(lang);
-        }
-    }
-
-    let filelist = [];
-    for (const file of files.split(' ')) {
-        if (file) {
-            filelist.push(file);
-        }
+        let cs: Component[] = components[i] = [];
+        const pattern = escapeRegExp(detectors[i]).replace(reDetector, (s, ...args) => {
+            if (!s) return s;
+            // hex
+            if ('RGBAWHSL'.includes(s[0])) {
+                cs.push({ name: s[0], type: 'hex', min: NaN, max: NaN });
+                return `([0-9a-fA-F]{${s.length}})`;
+            }
+            // rgbawhsl...
+            const g = args.at(-1);
+            const c = {
+                name: s[0],
+                type: [...new Set(g.type)].join(''),
+                min: parseFloat(g.min),
+                max: parseFloat(g.max),
+            } as Component;
+            cs.push(c);
+            const fps = '[+-]?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?';
+            if (c.type.includes('%')) { // (int | float)%
+                return `(${fps}%${c.type.length > 1 ? '?' : ''})`;
+            } else if (c.type === 'i') { // int
+                return `([+-]?[0-9]+)`;
+            } else { // float
+                return `(${fps})`;
+            }
+        });
+        detectRegexs[i] = new RegExp(pattern, 'g');
+        insertRegexs[i] = new RegExp(`^${pattern}\$`);
     }
 
     return {
@@ -73,9 +84,8 @@ export function read(): Config {
         detectors: detectors,
         detectRegexs: detectRegexs,
         insertRegexs: insertRegexs,
-        langs: langlist,
-        files: filelist,
-        detectRGBA: detectRGBA,
-        detectHSLA: detectHSLA,
+        components: components,
+        langs: langs.split(',').map(s => s.trim()).filter(s => s),
+        files: files.split(',').map(s => s.trim()).filter(s => s),
     };
 }

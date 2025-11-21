@@ -6,6 +6,8 @@
     "zeng",
     "RGBA",
     "ARGB",
+    "HLS",
+    "HLSA",
     "color",
     "colour",
     "picker"
@@ -38,16 +40,6 @@
           "default": "TODO **/*.txt",
           "markdownDescription": "A [glob pattern](https://code.visualstudio.com/api/references/vscode-api#GlobPattern) that is matched on the absolute path of the document, separated by space."
         },
-        "zeng-color-picker.Preview.DetectRGBA": {
-          "type": "boolean",
-          "default": true,
-          "markdownDescription": "Detect CSS style `rgba(int, int, int, float)` or `rgb(int, int, int)`."
-        },
-        "zeng-color-picker.Preview.DetectHSLA": {
-          "type": "boolean",
-          "default": true,
-          "markdownDescription": "Detect CSS style `hsla(int, %, %, float)` or `hsl(int, %, %)`."
-        },
         "zeng-color-picker.Preview.MatchPatterns": {
           "type": "array",
           "items": {
@@ -56,9 +48,13 @@
           "default": [
             "#RRGGBB!",
             "#RGB!",
+            "!rgba(ri, gi, bi, af)",
+            "!rgb(ri, gi, bi)",
+            "!hsla(hi0~360, s%, l%, af)",
+            "!hsl(hi0~360, s%, l%)",
             "gray(\"W\")"
           ],
-          "markdownDescription": "Use `UPPER` letters(R,G,B,A,W) to indicate hex color components(red, green, blue, alpha, grayscale); use sigh mark (!) to announce a word boundary. \n\n- Similiar items, such as *RGBA* and *ARGB*, will confuse the detector, hence should be avoided. \n\n- The **order** in the list matters."
+          "markdownDescription": "- Use `UPPER` letters (R,G,B,A,W,H,S,L) to indicate hex color components (red, green, blue, alpha, grayscale, hue, saturation, lightness).\n- Use `lower+i` (ri,gi,bi,ai,hi,si,li) to indicate integer (0-255) color components (red, green, blue, alpha, hue, saturation, lightness).\n- Use `lower+f` (rf,gf,bf,af,hf,sf,lf) to indicate float (0.0-1.0) color components (red, green, blue, alpha, hue, saturation, lightness).\n- Use `lower+%` (r%,g%,b%,a%,h%,s%,l%) to indicate percentage (0%-100%) color components (red, green, blue, alpha, hue, saturation, lightness).\n- Use `hi0~360` to indicate hue (0-360).\n- Use sigh mark `!` to announce a word boundary.\n- Similiar items, such as *RGBA* and *ARGB*, will confuse the detector, hence should be avoided.\n- The **order** in the list matters.\n - Example: `#RRGGBB!`, `!rgb(ri, gi, bi)`, `!hsla(hi0~360, s%, l%, af)`"
         },
         "zeng-color-picker.Picker.InsertAfterPick": {
           "type": "string",

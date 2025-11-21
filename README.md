@@ -6,12 +6,17 @@ If you encounter any problem, please [let us know](https://github.com/zengfanfan
 
 ## Features
 
-1. Custom color format easily
-2. File filter, by language or by path pattern
-3. Support gray scale
-
-![screenshot_1](res/screenshot_1.png)
-![screenshot_2](res/screenshot_2.png)
+1. Custom color format easily:
+    - Use `UPPER` letters (R,G,B,A,W,H,S,L) to indicate hex color components (red, green, blue, alpha, grayscale, hue, saturation, lightness).
+    - Use `lower+i` (ri,gi,bi,ai,hi,si,li) to indicate integer (0-255) color components (red, green, blue, alpha, hue, saturation, lightness).
+    - Use `lower+f` (rf,gf,bf,af,hf,sf,lf) to indicate float (0.0-1.0) color components (red, green, blue, alpha, hue, saturation, lightness).
+    - Use `lower+%` (r%,g%,b%,a%,h%,s%,l%) to indicate percentage (0%-100%) color components (red, green, blue, alpha, hue, saturation, lightness).
+    - Use `hi0~360` to indicate hue (0-360).
+    - Use sigh mark `!` to announce a word boundary.
+    - Similiar items, such as *RGBA* and *ARGB*, will confuse the detector, hence should be avoided.
+    - Example: `#RRGGBB!`, `!rgb(ri, gi, bi)`, `!hsla(hi0~360, s%, l%, af)`
+2. File filter, by language or by path pattern;
+3. Support gray scale.
 
 ## Settings
 

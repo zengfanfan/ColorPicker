@@ -19,86 +19,107 @@ function gray2rgba(gray: number): [number, number, number, number] {
     return [gray, gray, gray, 255];
 }
 
-const reRGBA = /rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*(?:,\s*([\d.]+)\s*)?\)/g; // e.g. rgb(255, 102, 0)
-const reHSLA = /hsla?\(\s*([\d.]+)\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%\s*(?:,\s*([\d.]+)\s*)?\)/g; // e.g. hsl(24, 100%, 50%)
+const reInteger = /^[-+]?[0-9]+$/;
+function match2color(match: RegExpExecArray, cs: config.Component[]): vscode.Color | null {
+    let [r, g, b, a, w, h, s, l] = [0, 0, 0, 1, 0, 0, 0, 0];
+
+    for (let i = 0; i < cs.length; i++) {
+        const c = cs[i];
+        const v = match[i + 1];
+        if (!v) return null;
+        console.log(`  t=${c.type}[${c.min}~${c.max}]${c.name}, v=${v}`);
+        if (c.type == 'hex') {
+            let f = parseInt(v.length == 1 ? v.repeat(2) : v, 16) / 255.0;
+            /**/ if (c.name === 'R') r = f;
+            else if (c.name === 'G') g = f;
+            else if (c.name === 'B') b = f;
+            else if (c.name === 'A') a = f;
+            else if (c.name === 'W') w = f;
+            else if (c.name === 'H') h = f;
+            else if (c.name === 'S') s = f;
+            else if (c.name === 'L') l = f;
+            console.log(`    f=${f}, r=${r}, g=${g}, b=${b}, a=${a}, w=${w}, h=${h}, s=${s}, l=${l}`);
+        } else {
+            let [hit, f] = [false, parseFloat(v)];
+            if (!hit && c.type.includes('%') && v.endsWith('%')) {// percentage
+                const min = c.min || 0;
+                const max = c.max || 100;
+                if (f >= min && f <= max) {
+                    hit = true;
+                    f /= 100.0;
+                }
+            }
+            if (!hit && c.type.includes('i') && v.match(reInteger)) {// integer
+                const min = c.min || 0;
+                const max = c.max || 255;
+                if (f >= min && f <= max) {
+                    hit = true;
+                    f = (f - min) / (max - min);
+                }
+            }
+            if (!hit && c.type.includes('f')) {// float
+                const min = c.min || 0;
+                const max = c.max || 1;
+                if (f >= min && f <= max) {
+                    hit = true;
+                }
+            }
+            if (!hit) return null;
+            /**/ if (c.name === 'r') r = f;
+            else if (c.name === 'g') g = f;
+            else if (c.name === 'b') b = f;
+            else if (c.name === 'a') a = f;
+            else if (c.name === 'w') w = f;
+            else if (c.name === 'h') h = f;
+            else if (c.name === 's') s = f;
+            else if (c.name === 'l') l = f;
+        }
+
+        const logvs: string[] = [];
+        /**/ if (r != 0) logvs.push(`r=${r}`);
+        else if (g != 0) logvs.push(`g=${g}`);
+        else if (b != 0) logvs.push(`b=${b}`);
+        else if (a != 0) logvs.push(`a=${a}`);
+        else if (w != 0) logvs.push(`w=${w}`);
+        else if (h != 0) logvs.push(`h=${h}`);
+        else if (s != 0) logvs.push(`s=${s}`);
+        else if (l != 0) logvs.push(`l=${l}`);
+        if (logvs.length > 0) console.log(`    ${logvs.join(', ')}`);
+    }
+
+    // 1: try rgb
+    if (r > 0 || g > 0 || b > 0) return new vscode.Color(r, g, b, a);
+    // 2: try hsl
+    if (h > 0 || s > 0 || l > 0) {
+        [r, g, b] = hsl2rgb(h, s, l);
+        return new vscode.Color(r, g, b, a);
+    }
+    // 3: try gray
+    if (w > 0) return new vscode.Color(w, w, w, a);
+    // 4: fallback
+    return new vscode.Color(r, g, b, a);
+}
+
 function line2colorinfos(lineno: number, text: string, cfg: config.Config): vscode.ColorInformation[] {
     let ret: vscode.ColorInformation[] = [];
-
-    // RGB(A)
-    if (cfg.detectRGBA) {
-        for (const m of text.matchAll(reRGBA)) {
-            const r = parseFloat(m[1]) / 255;
-            const g = parseFloat(m[2]) / 255;
-            const b = parseFloat(m[3]) / 255;
-            const a = parseFloat(m[4] || '1');
-            let from = m.index || 0;
-            ret.push(new vscode.ColorInformation(
-                new vscode.Range(lineno, from, lineno, from + m[0].length),
-                new vscode.Color(r, g, b, a)
-            ));
-        }
-    }
-
-    // HSL(A)
-    if (cfg.detectHSLA) {
-        for (const m of text.matchAll(reHSLA)) {
-            const h = parseFloat(m[1]) / 360;
-            const s = parseFloat(m[2]) / 100;
-            const l = parseFloat(m[3]) / 100;
-            const [r, g, b] = hsl2rgb(h, s, l);
-            const a = parseFloat(m[4] || '1');
-            let from = m.index || 0;
-            ret.push(new vscode.ColorInformation(
-                new vscode.Range(lineno, from, lineno, from + m[0].length),
-                new vscode.Color(r, g, b, a)
-            ));
-        }
-    }
 
     // Hex
     for (let i = 0; i < cfg.detectors.length; i++) {
         // match detector
-        const detector = cfg.detectors[i];
         const re = cfg.detectRegexs[i];
+        const cs = cfg.components[i];
+        if (lineno == 5) console.log(`![${lineno}] re = ${re.source}`);
         for (const match of text.matchAll(re)) {
-            // take color components
-            let [rs, gs, bs, as, ws] = ["", "", "", "", ""];
-            let mi = 1;
-            for (let j = 0; j < detector.length; j++) {
-                switch (detector[j]) {
-                    case 'R':
-                        rs += match[mi++] || '';
-                        break;
-                    case 'G':
-                        gs += match[mi++] || '';
-                        break;
-                    case 'B':
-                        bs += match[mi++] || '';
-                        break;
-                    case 'A':
-                        as += match[mi++] || '';
-                        break;
-                    case 'W':
-                        ws += match[mi++] || '';
-                        break;
-                }
-            }
-            // calculate color components
-            let [r, g, b, a, w] = [0, 0, 0, 255, 0];
-            if (rs) { r = +("0x" + (rs + rs + '0').substring(0, 2)); }
-            if (gs) { g = +("0x" + (gs + gs + '0').substring(0, 2)); }
-            if (bs) { b = +("0x" + (bs + bs + '0').substring(0, 2)); }
-            if (as) { a = +("0x" + (as + as + '0').substring(0, 2)); }
-            if (ws) { w = +("0x" + (ws + ws + '0').substring(0, 2)); }
-            // assemble
-            // config.debug(`[${detector}] ${match[0]} => ${r},${g},${b},${a},${w} [${rs}/${gs}/${bs}/${as}/${ws}]`);
-            if (w) {// grayscale conquer others
-                [r, b, g, a] = gray2rgba(w);
-            }
+            console.log(`[${lineno}] match = ${match}`);
+            const color = match2color(match, cs);
+            if (color == null) console.log(`[${lineno}] color = ${color}`);
+            else console.log(`[${lineno}] color = ${[color.red, color.green, color.blue, color.alpha]}`);
+
+            if (color === null) continue;
             let from = match.index || 0;
             ret.push(new vscode.ColorInformation(
                 new vscode.Range(lineno, from, lineno, from + match[0].length),
-                new vscode.Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0)
+                color,
             ));
         }
     }
@@ -244,6 +265,7 @@ class ColorProvider implements vscode.DocumentColorProvider {
         token: vscode.CancellationToken
     ): vscode.ProviderResult<vscode.ColorInformation[]> {
         let colors: vscode.ColorInformation[] = [];
+        console.log(`  ${'='.repeat(11)} ${document.fileName} `);
         for (let i = 0; i < document.lineCount; ++i) {
             if (i > this.from && i < this.to) {
                 let line = document.lineAt(i).text;
