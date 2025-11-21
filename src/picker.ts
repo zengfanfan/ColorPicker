@@ -27,7 +27,6 @@ function match2color(match: RegExpExecArray, cs: config.Component[]): vscode.Col
         const c = cs[i];
         const v = match[i + 1];
         if (!v) return null;
-        console.log(`  t=${c.type}[${c.min}~${c.max}]${c.name}, v=${v}`);
         if (c.type == 'hex') {
             let f = parseInt(v.length == 1 ? v.repeat(2) : v, 16) / 255.0;
             /**/ if (c.name === 'R') r = f;
@@ -38,7 +37,6 @@ function match2color(match: RegExpExecArray, cs: config.Component[]): vscode.Col
             else if (c.name === 'H') h = f;
             else if (c.name === 'S') s = f;
             else if (c.name === 'L') l = f;
-            console.log(`    f=${f}, r=${r}, g=${g}, b=${b}, a=${a}, w=${w}, h=${h}, s=${s}, l=${l}`);
         } else {
             let [hit, f] = [false, parseFloat(v)];
             if (!hit && c.type.includes('%') && v.endsWith('%')) {// percentage
@@ -74,17 +72,6 @@ function match2color(match: RegExpExecArray, cs: config.Component[]): vscode.Col
             else if (c.name === 's') s = f;
             else if (c.name === 'l') l = f;
         }
-
-        const logvs: string[] = [];
-        /**/ if (r != 0) logvs.push(`r=${r}`);
-        else if (g != 0) logvs.push(`g=${g}`);
-        else if (b != 0) logvs.push(`b=${b}`);
-        else if (a != 0) logvs.push(`a=${a}`);
-        else if (w != 0) logvs.push(`w=${w}`);
-        else if (h != 0) logvs.push(`h=${h}`);
-        else if (s != 0) logvs.push(`s=${s}`);
-        else if (l != 0) logvs.push(`l=${l}`);
-        if (logvs.length > 0) console.log(`    ${logvs.join(', ')}`);
     }
 
     // 1: try rgb
@@ -108,13 +95,8 @@ function line2colorinfos(lineno: number, text: string, cfg: config.Config): vsco
         // match detector
         const re = cfg.detectRegexs[i];
         const cs = cfg.components[i];
-        if (lineno == 5) console.log(`![${lineno}] re = ${re.source}`);
         for (const match of text.matchAll(re)) {
-            console.log(`[${lineno}] match = ${match}`);
             const color = match2color(match, cs);
-            if (color == null) console.log(`[${lineno}] color = ${color}`);
-            else console.log(`[${lineno}] color = ${[color.red, color.green, color.blue, color.alpha]}`);
-
             if (color === null) continue;
             let from = match.index || 0;
             ret.push(new vscode.ColorInformation(
