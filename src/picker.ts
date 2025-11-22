@@ -1,27 +1,29 @@
 import * as vscode from 'vscode';
 import * as config from './config';
+import { Color } from './util';
 
 let cfg: config.Config;
 
-function int2hex(i: number, width: number = 2): string {
-    let ret = i.toString(16);
-    if (ret.length < width) {
-        ret = '0'.repeat(width - ret.length) + ret;
+type NullNum = number | null;
+function isAnyNull(...args: any[]): boolean {
+    for (let i = 0; i < args.length; i++) {
+        if (args[i] === null) return true;
     }
-    return ret.substring(0, width);
-}
-
-function rgba2gray(r: number, g: number, b: number, a: number): number {
-    let gray = r * 0.3 + g * 0.59 + b * 0.11;
-    return gray * a / 255.0;
-}
-function gray2rgba(gray: number): [number, number, number, number] {
-    return [gray, gray, gray, 255];
+    return false;
 }
 
 const reInteger = /^[-+]?[0-9]+$/;
-function match2color(match: RegExpExecArray, cs: config.Component[]): vscode.Color | null {
-    let [r, g, b, a, w, h, s, l] = [0, 0, 0, 1, 0, 0, 0, 0];
+
+let precision = 3;
+function float2str(v: number, precision: number = 3) {
+    return parseFloat(v.toFixed(precision)).toString();
+}
+
+//#region viewer (detect)
+
+function match2color(match: RegExpExecArray, cs: config.Component[]): Color | null {
+    let [r, g, b, a]: [NullNum, NullNum, NullNum, number] = [null, null, null, 1];
+    let [w, h, s, l]: [NullNum, NullNum, NullNum, NullNum] = [null, null, null, null];
 
     for (let i = 0; i < cs.length; i++) {
         const c = cs[i];
@@ -60,6 +62,8 @@ function match2color(match: RegExpExecArray, cs: config.Component[]): vscode.Col
                 const max = c.max || 1;
                 if (f >= min && f <= max) {
                     hit = true;
+                    precision = Math.max(precision, v.trim().split('.')[1]?.length || 0);
+                    precision = Math.min(precision, 9);
                 }
             }
             if (!hit) return null;
@@ -75,24 +79,18 @@ function match2color(match: RegExpExecArray, cs: config.Component[]): vscode.Col
     }
 
     // 1: try rgb
-    if (r > 0 || g > 0 || b > 0) return new vscode.Color(r, g, b, a);
+    if (!isAnyNull(r, g, b)) return new Color(r!, g!, b!, a);
     // 2: try hsl
-    if (h > 0 || s > 0 || l > 0) {
-        [r, g, b] = hsl2rgb(h, s, l);
-        return new vscode.Color(r, g, b, a);
-    }
+    if (!isAnyNull(h, s, l)) return Color.fromHSLA(h!, s!, l!, a);
     // 3: try gray
-    if (w > 0) return new vscode.Color(w, w, w, a);
+    if (!isAnyNull(w)) return new Color(w!, w!, w!, a);
     // 4: fallback
-    return new vscode.Color(r, g, b, a);
+    return new Color(0, 0, 0, a);
 }
 
 function line2colorinfos(lineno: number, text: string, cfg: config.Config): vscode.ColorInformation[] {
     let ret: vscode.ColorInformation[] = [];
-
-    // Hex
     for (let i = 0; i < cfg.detectors.length; i++) {
-        // match detector
         const re = cfg.detectRegexs[i];
         const cs = cfg.components[i];
         for (const match of text.matchAll(re)) {
@@ -101,137 +99,111 @@ function line2colorinfos(lineno: number, text: string, cfg: config.Config): vsco
             let from = match.index || 0;
             ret.push(new vscode.ColorInformation(
                 new vscode.Range(lineno, from, lineno, from + match[0].length),
-                color,
+                color.vscolor,
             ));
         }
     }
-
     return ret;
 }
 
-function vscolor2str(color: vscode.Color, text: string, cfg: config.Config): string | null {
-    const [ri, gi, bi, ai] = [color.red * 255, color.green * 255, color.blue * 255, color.alpha * 255];
-    const wi = rgba2gray(ri, gi, bi, ai);
-    let [rs, gs, bs, as, ws] = [int2hex(ri), int2hex(gi), int2hex(bi), int2hex(ai), int2hex(wi)];
-    let insert = cfg.insert;
+//#endregion
+//#region picker (insert)
 
-    if (!insert) {// let's guess ...
-        for (let i = 0; i < cfg.detectors.length; i++) {
-            const re = cfg.insertRegexs[i];
-            if (text.match(re)) {
-                insert = cfg.detectors[i];
-                break;
+function isFormatMatched(match: RegExpMatchArray, cs: config.Component[]): boolean {
+    for (let i = 0; i < cs.length; i++) {
+        const c = cs[i];
+        const v = match[i + 1];
+        if (!v) return false;
+        if (c.type == 'hex') continue; // hex
+        let f = parseFloat(v);
+        if (c.type.includes('%') && v.endsWith('%')) {// percentage
+            const min = c.min || 0;
+            const max = c.max || 100;
+            if (f >= min && f <= max) continue;
+        }
+        if (c.type.includes('i') && v.match(reInteger)) {// integer
+            const min = c.min || 0;
+            const max = c.max || 255;
+            if (f >= min && f <= max) continue;
+        }
+        if (c.type.includes('f')) {// float
+            const min = c.min || 0;
+            const max = c.max || 1;
+            if (f >= min && f <= max) continue;
+        }
+        return false;
+    }
+    return true;
+}
+
+function guessInsertFormat(text: string, cfg: config.Config): string | null {
+    for (let i = 0; i < cfg.detectors.length; i++) {
+        const re = cfg.detectRegexs[i];
+        const cs = cfg.components[i];
+        const match = text.match(re);
+        if (match && isFormatMatched(match, cs)) {
+            return cfg.detectors[i];
+        }
+    }
+    return null;
+}
+
+const reDetector = /R+|G+|B+|A+|W+|H+|S+|L+|[rgbawhsl](?<type>[if%]+)((?<min>(\\\+|-)?[0-9]+(\\\.[0-9]+)?)~(?<max>(\\\+|-)?[0-9]+(\\\.[0-9]+)?))?/g;
+function vscolor2str(color: Color, format: string): string {
+    return format.replace(reDetector, (v, ...args) => {
+        if (!v) return v;
+        let name = v[0];
+        // hex
+        if ('RGBAWHSL'.includes(name)) {
+            const onechar = v.length == 1;
+            if (name == 'R') return onechar ? color.rsHex1 : color.rsHex2;
+            if (name == 'G') return onechar ? color.gsHex1 : color.gsHex2;
+            if (name == 'B') return onechar ? color.bsHex1 : color.bsHex2;
+            if (name == 'A') return onechar ? color.asHex1 : color.asHex2;
+            if (name == 'W') return onechar ? color.wsHex1 : color.wsHex2;
+            if (name == 'H') return onechar ? color.hsHex1 : color.hsHex2;
+            if (name == 'S') return onechar ? color.ssHex1 : color.ssHex2;
+            if (name == 'L') return onechar ? color.lsHex1 : color.lsHex2;
+            return v;
+        }
+        // rgbawhsl...
+        const g = args.at(-1);
+        const c = {
+            name: name,
+            type: [...new Set(g.type)].join(''),
+            min: parseFloat(g.min),
+            max: parseFloat(g.max),
+        } as config.Component;
+        let f: NullNum = null;
+        /**/ if (name == 'r') f = color.r;
+        else if (name == 'g') f = color.g;
+        else if (name == 'b') f = color.b;
+        else if (name == 'a') f = color.a;
+        else if (name == 'w') f = color.w;
+        else if (name == 'h') f = color.h;
+        else if (name == 's') f = color.s;
+        else if (name == 'l') f = color.l;
+        if (f != null) {
+            if (c.type.includes('%') && v.endsWith('%')) { // percentage
+                const min = c.min || 0;
+                const max = c.max || 100;
+                return Math.round(f * (max - min) + min) + '%';
+            } else if (c.type.includes('i') && v.match(reInteger)) { // integer
+                const min = c.min || 0;
+                const max = c.max || 255;
+                return Math.round(f * (max - min) + min).toString();
+            } else if (c.type.includes('f')) { // float
+                const min = c.min || 0;
+                const max = c.max || 1;
+                return float2str(f * (max - min) + min, precision);
             }
         }
-    }
-
-    if (!insert) {// guess fail
-        config.debug("guess fail!");
-        return null;
-    }
-
-    let ret = '';
-
-    for (const c of insert) {
-        switch (c) {
-            case 'R':
-                ret += rs[0];
-                rs = rs.substring(1);
-                break;
-            case 'G':
-                ret += gs[0];
-                gs = gs.substring(1);
-                break;
-            case 'B':
-                ret += bs[0];
-                bs = bs.substring(1);
-                break;
-            case 'A':
-                ret += as[0];
-                as = as.substring(1);
-                break;
-            case 'W':
-                ret += ws[0];
-                ws = ws.substring(1);
-                break;
-            case '!':
-                break;
-            default:
-                ret += c;
-                break;
-        }
-    }
-
-    // config.debug(`${text} => ${ret}`);
-    return ret;
+        // fallback
+        return v;
+    });
 }
 
-function vscolor2hex(color: vscode.Color): string { // e.g. #112233 or #11223344
-    const r = Math.round(color.red * 255);
-    const g = Math.round(color.green * 255);
-    const b = Math.round(color.blue * 255);
-    const a = Math.round(color.alpha * 255);
-    const astr = a < 255 ? int2hex(a) : '';
-    return `#${int2hex(r)}${int2hex(g)}${int2hex(b)}${astr}`;
-}
-
-function vscolor2rgba(color: vscode.Color): string { // e.g. rgb(111, 22, 3) or rgba(111, 22, 3, 0.5)
-    const r = Math.round(color.red * 255);
-    const g = Math.round(color.green * 255);
-    const b = Math.round(color.blue * 255);
-    const a = color.alpha;
-    const astr = a < 1 ? `, ${a.toFixed(2)}` : '';
-    return `rgb(${r}, ${g}, ${b}${astr})`;
-}
-
-function vscolor2hsla(color: vscode.Color): string { // e.g. hsl(11, 22%, 33%) or hsla(11, 22%, 33%, 0.5)
-    let [h, s, l] = rgb2hsl(color.red, color.green, color.blue);
-    h = Math.round(h * 360);
-    s = Math.round(s * 100);
-    l = Math.round(l * 100);
-    const a = color.alpha;
-    const astr = a < 1 ? `, ${a.toFixed(2)}` : '';
-    return `hsl(${h.toFixed(0)}, ${s.toFixed(0)}%, ${l.toFixed(0)}%${astr})`;
-}
-
-/**
- * Converts an HSL color value to RGB.
- * Assumes h, s, and l are contained in the set [0, 1] and
- * returns r, g, and b in the set [0, 1].
- * see:
- *      * https://en.wikipedia.org/wiki/HSL_and_HSV
- *      * https://stackoverflow.com/a/64090995/29947112
- *
- * @param   {number}  h       The hue
- * @param   {number}  s       The saturation
- * @param   {number}  l       The lightness
- * @return  {Array}           The RGB representation
- */
-function hsl2rgb(h: number, s: number, l: number): [number, number, number] {
-    let a: number = s * Math.min(l, 1 - l);
-    let f = (n: number, k = (n + h * 12) % 12) => l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-    return [f(0), f(8), f(4)];
-}
-
-/**
- * Converts an RGB color value to HSL.
- * Assumes r, g, and b are contained in the set [0, 1] and
- * returns h, s, and l in the set [0, 1].
- * see:
- *      * https://en.wikipedia.org/wiki/HSL_and_HSV
- *      * https://stackoverflow.com/a/64090995/29947112
- *
- * @param   {number}  r       The red color value
- * @param   {number}  g       The green color value
- * @param   {number}  b       The blue color value
- * @return  {Array}           The HSL representation
- */
-function rgb2hsl(r: number, g: number, b: number): [number, number, number] {
-    let a = Math.max(r, g, b), n = a - Math.min(r, g, b), f = (1 - Math.abs(a + a - n - 1));
-    let h = n && ((a == r) ? (g - b) / n : ((a == g) ? 2 + (b - r) / n : 4 + (r - g) / n));
-    return [(h < 0 ? h + 6 : h) / 6, f ? n / f : 0, (a + a - n) / 2];
-}
-
+//#endregion
 
 class ColorProvider implements vscode.DocumentColorProvider {
     private from = 0;
@@ -247,7 +219,6 @@ class ColorProvider implements vscode.DocumentColorProvider {
         token: vscode.CancellationToken
     ): vscode.ProviderResult<vscode.ColorInformation[]> {
         let colors: vscode.ColorInformation[] = [];
-        console.log(`  ${'='.repeat(11)} ${document.fileName} `);
         for (let i = 0; i < document.lineCount; ++i) {
             if (i > this.from && i < this.to) {
                 let line = document.lineAt(i).text;
@@ -264,27 +235,22 @@ class ColorProvider implements vscode.DocumentColorProvider {
         token: vscode.CancellationToken
     ): vscode.ProviderResult<vscode.ColorPresentation[]> {
         let presentations: string[] = [];
+        console.log(`B  ${'='.repeat(11)} ${context.document.fileName} `);
 
-        // Add Hex formats
-        let text = context.document.getText(context.range);
-        if (text) {
-            let s = vscolor2str(color, text, cfg);
-            if (s) presentations.push(s);
-            else presentations.push(vscolor2hex(color));
+        let insertFormat = cfg.insertFormat;
+        if (!insertFormat.trim()) {
+            let text = context.document.getText(context.range);
+            insertFormat = guessInsertFormat(text, cfg) || cfg.insertFormat;
         }
 
-        if (!cfg.insert) {
-            // Add RGB(A) format
-            presentations.push(vscolor2rgba(color));
-            // Add HSL(A) format
-            presentations.push(vscolor2hsla(color));
-        }
+        let str = vscolor2str(new Color(color), insertFormat);
+        if (str) presentations.push(str);
 
         return presentations.map(p => new vscode.ColorPresentation(p));
     }
 }
 
-// init and deinit
+//#region updater
 
 let listener0: vscode.Disposable;
 let listener1: vscode.Disposable;
@@ -338,6 +304,9 @@ function onUpdateTimer() {
     updateTimer = setTimeout(onUpdateTimer, UPDATE_MIN_INTERVAL);
 }
 
+//#endregion updater
+//#region init and deinit
+
 export function activate() {
     cfg = config.read();
     changedTime = Date.now();
@@ -376,3 +345,5 @@ export function deactivate() {
     listener0.dispose();
     listener1.dispose();
 }
+
+//#endregion

@@ -28,10 +28,9 @@ export type Component = {
 };
 
 export type Config = {
-    insert: string,
+    insertFormat: string,
     detectors: string[],
     detectRegexs: RegExp[],
-    insertRegexs: RegExp[], // used to guess when inserting
     components: Component[][], // paired with {detectors} and matched groups
     langs: string[],
     files: string[],
@@ -46,21 +45,21 @@ export function read(): Config {
     const files = cfg.get<string>("Filter.ApplyForTheseFiles") || "";
 
     let detectRegexs: RegExp[] = [];
-    let insertRegexs: RegExp[] = [];
     let components: Component[][] = [];
     for (let i = 0; i < detectors.length; i++) {
         let cs: Component[] = components[i] = [];
         const pattern = escapeRegExp(detectors[i]).replace(reDetector, (s, ...args) => {
             if (!s) return s;
+            let name = s[0];
             // hex
-            if ('RGBAWHSL'.includes(s[0])) {
-                cs.push({ name: s[0], type: 'hex', min: NaN, max: NaN });
+            if ('RGBAWHSL'.includes(name)) {
+                cs.push({ name: name, type: 'hex', min: NaN, max: NaN });
                 return `([0-9a-fA-F]{${s.length}})`;
             }
             // rgbawhsl...
             const g = args.at(-1);
             const c = {
-                name: s[0],
+                name: name,
                 type: [...new Set(g.type)].join(''),
                 min: parseFloat(g.min),
                 max: parseFloat(g.max),
@@ -76,14 +75,12 @@ export function read(): Config {
             }
         });
         detectRegexs[i] = new RegExp(pattern, 'g');
-        insertRegexs[i] = new RegExp(`^${pattern}\$`);
     }
 
     return {
-        insert: insert,
+        insertFormat: insert,
         detectors: detectors,
         detectRegexs: detectRegexs,
-        insertRegexs: insertRegexs,
         components: components,
         langs: langs.split(',').map(s => s.trim()).filter(s => s),
         files: files.split(',').map(s => s.trim()).filter(s => s),
