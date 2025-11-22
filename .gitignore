@@ -3,7 +3,9 @@
 /vsc-extension-quickstart.md
 /src/test
 /res/vscode_access_token.txt
-/test
 /*.vsix
 package-lock.json
 yarn.lock
+/test/*
+!/test/.vscode
+!/test/*.md

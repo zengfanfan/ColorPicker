@@ -59,7 +59,7 @@
         "zeng-color-picker.Picker.InsertAfterPick": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Same rule as `#zeng-color-picker.Preview.MatchPatterns#`.\nLeave blank to let it guess, which is `recommended`."
+          "markdownDescription": "Same rule as `#zeng-color-picker.Preview.MatchPatterns#`.\n\nLeave blank to let it guess, which is `recommended`."
         },
         "zeng-color-picker.Picker.AdditionalLabels": {
           "type": "array",
@@ -71,7 +71,7 @@
             "!rgb(ri, gi, bi)",
             "!hsl(hi0~360, s%, l%)"
           ],
-          "markdownDescription": "When clicking the title of the popup picker, cycles through these labels (and the `#zeng-color-picker.Preview.InsertAfterPick#`).\nSame rule as `#zeng-color-picker.Preview.MatchPatterns#`."
+          "markdownDescription": "When clicking the title of the popup picker, cycles through these labels (and the `#zeng-color-picker.Preview.InsertAfterPick#`).\n\nSame rule as `#zeng-color-picker.Preview.MatchPatterns#`."
         }
       }
     }

@@ -1,0 +1,8 @@
+{
+    "editor.colorDecorators": false,
+    "zeng-color-picker.Filter.ApplyForTheseLanguages": "markdown",
+    "zeng-color-picker.Filter.ApplyForTheseFiles": "**/*.txt",
+    "zeng-color-picker.Preview.MatchPatterns": [
+        "#RRGGBB!",
+    ],
+}

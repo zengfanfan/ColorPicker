@@ -234,9 +234,7 @@ class ColorProvider implements vs.DocumentColorProvider {
         context: { document: vs.TextDocument, range: vs.Range },
         token: vs.CancellationToken
     ): vs.ProviderResult<vs.ColorPresentation[]> {
-        let presentations: string[] = [];
-        console.log(`B  ${'='.repeat(11)} ${context.document.fileName} `);
-
+        let presentations: string[] = []; // switch lables when clicking the title of picker
         let insertFormat = cfg.insertFormat;
         if (!insertFormat.trim()) {
             let text = context.document.getText(context.range);
