@@ -18,6 +18,18 @@ If you encounter any problem, please [let us know](https://github.com/zengfanfan
 2. File filter, by language or by path pattern;
 3. Support gray scale.
 
+## Disable the builtin picker
+
+Sometimes you may see more than one color blocks for each color string (such as in css files). The other one is created by [vscode builtin color picker](https://code.visualstudio.com/docs/languages/css#_syntax-coloring-color-preview). You can disable the builtin one by adding the following [settings](https://code.visualstudio.com/docs/configure/settings):
+```json
+    // globally
+    "editor.colorDecorators": false,
+    // for specific language (e.g. css)
+    "[css]": {
+        "editor.colorDecorators": false,
+    }
+```
+
 ## Settings
 
 This extension contributes the following settings:

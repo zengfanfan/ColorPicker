@@ -1,4 +1,4 @@
-import * as vscode from 'vscode';
+import * as vs from 'vscode';
 
 export class Color {
     private _r: number = 0;
@@ -27,11 +27,11 @@ export class Color {
     constructor();
     constructor(r: number, g: number, b: number);
     constructor(r: number, g: number, b: number, a: number);
-    constructor(vscolor: vscode.Color);
+    constructor(vscolor: vs.Color);
     constructor(...args: any[]) {
         if (args.length == 0) return;
         const r = args[0];
-        if (r instanceof vscode.Color) {
+        if (r instanceof vs.Color) {
             this._r = r.red;
             this._g = r.green;
             this._b = r.blue;
@@ -54,7 +54,7 @@ export class Color {
     //#endregion
     //#region basic properties
 
-    get vscolor(): vscode.Color { return new vscode.Color(this._r, this._g, this._b, this._a); }
+    get vscolor(): vs.Color { return new vs.Color(this._r, this._g, this._b, this._a); }
     get a(): number { return this._a; }
     set a(v: number) { this._a = v; }
     get w(): number { return Color.rgba2gray(this._r, this._g, this._b); }

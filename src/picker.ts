@@ -1,4 +1,4 @@
-import * as vscode from 'vscode';
+import * as vs from 'vscode';
 import * as config from './config';
 import { Color } from './util';
 
@@ -88,8 +88,8 @@ function match2color(match: RegExpExecArray, cs: config.Component[]): Color | nu
     return new Color(0, 0, 0, a);
 }
 
-function line2colorinfos(lineno: number, text: string, cfg: config.Config): vscode.ColorInformation[] {
-    let ret: vscode.ColorInformation[] = [];
+function line2colorinfos(lineno: number, text: string): vs.ColorInformation[] {
+    let ret: vs.ColorInformation[] = [];
     for (let i = 0; i < cfg.detectors.length; i++) {
         const re = cfg.detectRegexs[i];
         const cs = cfg.components[i];
@@ -97,8 +97,8 @@ function line2colorinfos(lineno: number, text: string, cfg: config.Config): vsco
             const color = match2color(match, cs);
             if (color === null) continue;
             let from = match.index || 0;
-            ret.push(new vscode.ColorInformation(
-                new vscode.Range(lineno, from, lineno, from + match[0].length),
+            ret.push(new vs.ColorInformation(
+                new vs.Range(lineno, from, lineno, from + match[0].length),
                 color.vscolor,
             ));
         }
@@ -136,7 +136,7 @@ function isFormatMatched(match: RegExpMatchArray, cs: config.Component[]): boole
     return true;
 }
 
-function guessInsertFormat(text: string, cfg: config.Config): string | null {
+function guessInsertFormat(text: string): string | null {
     for (let i = 0; i < cfg.detectors.length; i++) {
         const re = cfg.detectRegexs[i];
         const cs = cfg.components[i];
@@ -205,7 +205,7 @@ function vscolor2str(color: Color, format: string): string {
 
 //#endregion
 
-class ColorProvider implements vscode.DocumentColorProvider {
+class ColorProvider implements vs.DocumentColorProvider {
     private from = 0;
     private to = Infinity;
     constructor(from?: number, to?: number) { // from & to: lineno, specify ranges
@@ -215,14 +215,14 @@ class ColorProvider implements vscode.DocumentColorProvider {
 
     // preview color in the editor
     provideDocumentColors(
-        document: vscode.TextDocument,
-        token: vscode.CancellationToken
-    ): vscode.ProviderResult<vscode.ColorInformation[]> {
-        let colors: vscode.ColorInformation[] = [];
+        document: vs.TextDocument,
+        token: vs.CancellationToken
+    ): vs.ProviderResult<vs.ColorInformation[]> {
+        let colors: vs.ColorInformation[] = [];
         for (let i = 0; i < document.lineCount; ++i) {
             if (i > this.from && i < this.to) {
                 let line = document.lineAt(i).text;
-                colors = colors.concat(line2colorinfos(i, line, cfg));
+                colors = colors.concat(line2colorinfos(i, line));
             }
         }
         return colors; // <= 500, see https://github.com/microsoft/vscode/issues/44615#issuecomment-396497187
@@ -230,37 +230,41 @@ class ColorProvider implements vscode.DocumentColorProvider {
 
     // insert string after pick
     provideColorPresentations(
-        color: vscode.Color,
-        context: { document: vscode.TextDocument, range: vscode.Range },
-        token: vscode.CancellationToken
-    ): vscode.ProviderResult<vscode.ColorPresentation[]> {
+        vscolor: vs.Color,
+        context: { document: vs.TextDocument, range: vs.Range },
+        token: vs.CancellationToken
+    ): vs.ProviderResult<vs.ColorPresentation[]> {
         let presentations: string[] = [];
         console.log(`B  ${'='.repeat(11)} ${context.document.fileName} `);
 
         let insertFormat = cfg.insertFormat;
         if (!insertFormat.trim()) {
             let text = context.document.getText(context.range);
-            insertFormat = guessInsertFormat(text, cfg) || cfg.insertFormat;
+            insertFormat = guessInsertFormat(text) || cfg.insertFormat;
         }
 
-        let str = vscolor2str(new Color(color), insertFormat);
-        if (str) presentations.push(str);
+        const labels = [cfg.insertFormat].concat(cfg.additionalLabels);
+        const color = new Color(vscolor);
+        for (const label of labels) {
+            const str = vscolor2str(color, label);
+            if (str) presentations.push(str);
+        }
 
-        return presentations.map(p => new vscode.ColorPresentation(p));
+        return presentations.map(p => new vs.ColorPresentation(p));
     }
 }
 
 //#region updater
 
-let listener0: vscode.Disposable;
-let listener1: vscode.Disposable;
-let listeners: vscode.Disposable[] = [];
+let listener0: vs.Disposable;
+let listener1: vs.Disposable;
+let listeners: vs.Disposable[] = [];
 const ANTI_SHAKE = 4;
 let lastVisibleStart = -ANTI_SHAKE - 999;
-let lastActiveEditor: vscode.TextEditor | undefined = undefined;
+let lastActiveEditor: vs.TextEditor | undefined = undefined;
 
 function updateColorProvider(force: boolean = false) {
-    const aEditor = vscode.window.activeTextEditor;
+    const aEditor = vs.window.activeTextEditor;
     if (lastActiveEditor != aEditor) {
         lastActiveEditor = aEditor;
         force = true;
@@ -281,9 +285,9 @@ function updateColorProvider(force: boolean = false) {
     listeners = [];
     let cp = new ColorProvider(from - ANTI_SHAKE, to + ANTI_SHAKE);
     for (const file of cfg.files) {
-        listeners.push(vscode.languages.registerColorProvider({ pattern: file }, cp));
+        listeners.push(vs.languages.registerColorProvider({ pattern: file }, cp));
     }
-    listeners.push(vscode.languages.registerColorProvider(cfg.langs, cp));
+    listeners.push(vs.languages.registerColorProvider(cfg.langs, cp));
 }
 
 const UPDATE_MIN_INTERVAL = 50; // ms
@@ -314,12 +318,12 @@ export function activate() {
     /** [onDidChangeTextEditorVisibleRanges]
      * An Event which fires when the visible ranges of an editor has changed.
      */
-    listener0 = vscode.window.onDidChangeTextEditorVisibleRanges((event) => {
+    listener0 = vs.window.onDidChangeTextEditorVisibleRanges((event) => {
         let editor = event.textEditor;
         // file filter
-        let matched = vscode.languages.match(cfg.langs, editor.document) > 0;
+        let matched = vs.languages.match(cfg.langs, editor.document) > 0;
         for (const file of cfg.files) {
-            matched = matched || vscode.languages.match({ pattern: file }, editor.document) > 0;
+            matched = matched || vs.languages.match({ pattern: file }, editor.document) > 0;
             if (matched) break;
         }
         if (!matched) return;
@@ -330,7 +334,7 @@ export function activate() {
      * An Event which fires when the active editor has changed.
      * Note that the event also fires when the active editor changes to undefined
      */
-    listener1 = vscode.window.onDidChangeActiveTextEditor(event => {
+    listener1 = vs.window.onDidChangeActiveTextEditor(event => {
         changedTime = Date.now();
     });
 }

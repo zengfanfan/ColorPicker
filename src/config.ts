@@ -1,4 +1,4 @@
-import * as vscode from 'vscode';
+import * as vs from 'vscode';
 
 export const name = "Zeng's Color-picker";
 export const id = "zeng-color-picker";
@@ -11,7 +11,7 @@ export function debug(message?: any, ...optionalParams: any[]): void {
 }
 export function toast(message: string, ...items: string[]): void {
     if (!release) {
-        vscode.window.showInformationMessage(message, ...items);
+        vs.window.showInformationMessage(message, ...items);
     }
 }
 
@@ -28,19 +28,21 @@ export type Component = {
 };
 
 export type Config = {
-    insertFormat: string,
     detectors: string[],
     detectRegexs: RegExp[],
     components: Component[][], // paired with {detectors} and matched groups
+    insertFormat: string,
+    additionalLabels: string[],
     langs: string[],
     files: string[],
 };
 
 const reDetector = /R+|G+|B+|A+|W+|H+|S+|L+|[rgbawhsl](?<type>[if%]+)((?<min>(\\\+|-)?[0-9]+(\\\.[0-9]+)?)~(?<max>(\\\+|-)?[0-9]+(\\\.[0-9]+)?))?/g;
 export function read(): Config {
-    const cfg = vscode.workspace.getConfiguration("zeng-color-picker");
-    const insert = cfg.get<string>("Picker.InsertAfterPick") || "";
+    const cfg = vs.workspace.getConfiguration("zeng-color-picker");
     const detectors = cfg.get<string[]>("Preview.MatchPatterns") || [];
+    const insert = cfg.get<string>("Picker.InsertAfterPick") || "";
+    const labels = cfg.get<string[]>("Picker.AdditionalLabels") || [];
     const langs = cfg.get<string>("Filter.ApplyForTheseLanguages") || "";
     const files = cfg.get<string>("Filter.ApplyForTheseFiles") || "";
 
@@ -78,10 +80,11 @@ export function read(): Config {
     }
 
     return {
-        insertFormat: insert,
         detectors: detectors,
         detectRegexs: detectRegexs,
         components: components,
+        insertFormat: insert,
+        additionalLabels: labels,
         langs: langs.split(',').map(s => s.trim()).filter(s => s),
         files: files.split(',').map(s => s.trim()).filter(s => s),
     };
