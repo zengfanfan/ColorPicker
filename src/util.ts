@@ -84,6 +84,14 @@ export class Color {
     //#endregion
     //#region hex string
 
+    /** "RRGGBB" | "RRGGBBAA" */
+    get hex(): string {
+        const oc = false;
+        let ret = Color.float2hex(this._r, oc) + Color.float2hex(this._g, oc) + Color.float2hex(this._b, oc);
+        if (this._a < 1) ret += Color.float2hex(this._a, oc);
+        return ret;
+    }
+
     get rsHex1(): string { return Color.float2hex(this._r, true) }
     get gsHex1(): string { return Color.float2hex(this._g, true) }
     get bsHex1(): string { return Color.float2hex(this._b, true) }
@@ -113,7 +121,7 @@ export class Color {
     * @return  {string}            The hex string
     */
     static float2hex(value: number, onechar: boolean): string {
-        if (onechar) return Math.round(0.3 * 0xf).toString(16);
+        if (onechar) return Math.round(value * 0xf).toString(16);
         else return Math.round(value * 0xff).toString(16).padStart(2, '0');
     }
 

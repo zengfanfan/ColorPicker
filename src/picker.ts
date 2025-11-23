@@ -14,7 +14,7 @@ function isAnyNull(...args: any[]): boolean {
 
 const reInteger = /^[-+]?[0-9]+$/;
 
-let precision = 3;
+let precision = 2;
 function float2str(v: number, precision: number = 3) {
     return parseFloat(v.toFixed(precision)).toString();
 }
@@ -91,7 +91,7 @@ function match2color(match: RegExpExecArray, cs: config.Component[]): Color | nu
 function line2colorinfos(lineno: number, text: string): vs.ColorInformation[] {
     let ret: vs.ColorInformation[] = [];
     for (let i = 0; i < cfg.detectors.length; i++) {
-        const re = cfg.detectRegexs[i];
+        const re = cfg.detectRegexes[i];
         const cs = cfg.components[i];
         for (const match of text.matchAll(re)) {
             const color = match2color(match, cs);
@@ -138,7 +138,7 @@ function isFormatMatched(match: RegExpMatchArray, cs: config.Component[]): boole
 
 function guessInsertFormat(text: string): string | null {
     for (let i = 0; i < cfg.detectors.length; i++) {
-        const re = cfg.detectRegexs[i];
+        const re = cfg.detectRegexesWhole[i];
         const cs = cfg.components[i];
         const match = text.match(re);
         if (match && isFormatMatched(match, cs)) {
@@ -148,10 +148,9 @@ function guessInsertFormat(text: string): string | null {
     return null;
 }
 
-const reDetector = /R+|G+|B+|A+|W+|H+|S+|L+|[rgbawhsl](?<type>[if%]+)((?<min>(\\\+|-)?[0-9]+(\\\.[0-9]+)?)~(?<max>(\\\+|-)?[0-9]+(\\\.[0-9]+)?))?/g;
 function vscolor2str(color: Color, format: string): string {
-    return format.replace(reDetector, (v, ...args) => {
-        if (!v) return v;
+    return format.replaceAll('!', '').replace(config.reInserter, (v, ...args) => {
+        v = v.replace(/^\s*{+|}+\s*$/g, '');
         let name = v[0];
         // hex
         if ('RGBAWHSL'.includes(name)) {
@@ -184,19 +183,21 @@ function vscolor2str(color: Color, format: string): string {
         else if (name == 's') f = color.s;
         else if (name == 'l') f = color.l;
         if (f != null) {
-            if (c.type.includes('%') && v.endsWith('%')) { // percentage
+            let ret: string = '';
+            if (c.type.includes('%')) { // percentage
                 const min = c.min || 0;
                 const max = c.max || 100;
-                return Math.round(f * (max - min) + min) + '%';
-            } else if (c.type.includes('i') && v.match(reInteger)) { // integer
+                ret = Math.round(f * (max - min) + min) + '%';
+            } else if (c.type.includes('i')) { // integer
                 const min = c.min || 0;
                 const max = c.max || 255;
-                return Math.round(f * (max - min) + min).toString();
+                ret = Math.round(f * (max - min) + min).toString();
             } else if (c.type.includes('f')) { // float
                 const min = c.min || 0;
                 const max = c.max || 1;
-                return float2str(f * (max - min) + min, precision);
+                ret = float2str(f * (max - min) + min, precision);
             }
+            if (ret) return ret;
         }
         // fallback
         return v;
@@ -241,7 +242,7 @@ class ColorProvider implements vs.DocumentColorProvider {
             insertFormat = guessInsertFormat(text) || cfg.insertFormat;
         }
 
-        const labels = [cfg.insertFormat].concat(cfg.additionalLabels);
+        const labels = [insertFormat].concat(cfg.additionalLabels);
         const color = new Color(vscolor);
         for (const label of labels) {
             const str = vscolor2str(color, label);

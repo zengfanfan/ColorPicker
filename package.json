@@ -14,7 +14,7 @@
   ],
   "publisher": "zengfanfan",
   "icon": "res/icon.png",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "engines": {
     "vscode": "^1.58.2"
   },
@@ -48,13 +48,11 @@
           "default": [
             "#RRGGBB!",
             "#RGB!",
-            "!rgba(ri, gi, bi, af)",
-            "!rgb(ri, gi, bi)",
-            "!hsla(hi0~360, s%, l%, af)",
-            "!hsl(hi0~360, s%, l%)",
+            "!rgba({ri}, {gi}, {bi}, {af})",
+            "!hsla({hi:0~360}, {s%}, {l%}, {af})",
             "gray(\"W\")"
           ],
-          "markdownDescription": "- Use `UPPER` letters (R,G,B,A,W,H,S,L) to indicate hex color components (red, green, blue, alpha, grayscale, hue, saturation, lightness).\n- Use `lower+i` (ri,gi,bi,ai,hi,si,li) to indicate integer (0-255) color components (red, green, blue, alpha, hue, saturation, lightness).\n- Use `lower+f` (rf,gf,bf,af,hf,sf,lf) to indicate float (0.0-1.0) color components (red, green, blue, alpha, hue, saturation, lightness).\n- Use `lower+%` (r%,g%,b%,a%,h%,s%,l%) to indicate percentage (0%-100%) color components (red, green, blue, alpha, hue, saturation, lightness).\n- Use `hi0~360` to indicate hue (0-360).\n- Use sigh mark `!` to announce a word boundary.\n- Similiar items, such as *RGBA* and *ARGB*, will confuse the detector, hence should be avoided.\n- The **order** in the list matters.\n- Example: `#RRGGBB!`, `!rgb(ri, gi, bi)`, `!hsla(hi0~360, s%, l%, af)`"
+          "markdownDescription": "- Use `UPPER` letters (R,G,B,A,W,H,S,L) to indicate hex color components (red, green, blue, alpha, grayscale, hue, saturation, lightness).\n- Use `{lower+i}` ({ri},{gi},{bi},{ai},{hi},{si},{li}) to indicate integer (0-255) color components (red, green, blue, alpha, hue, saturation, lightness).\n- Use `{lower+f}` ({rf},{gf},{bf},{af},{hf},{sf},{lf}) to indicate float (0.0-1.0) color components (red, green, blue, alpha, hue, saturation, lightness).\n- Use `{lower+%}` ({r%},{g%},{b%},{a%},{h%},{s%},{l%}) to indicate percentage (0%-100%) color components (red, green, blue, alpha, hue, saturation, lightness).\n- Use `{hi:0~360}` to indicate hue (0-360).\n- Use sigh mark `!` to announce a word boundary.\n- Similiar items, such as *RGBA* and *ARGB*, will confuse the detector, hence should be avoided.\n- The **order** in the list matters.\n- Example: `#RRGGBB!`, `!rgb({ri}, {gi}, {bi})`, `!hsla({hi:0~360}, {s%}, {l%}, {af})`"
         },
         "zeng-color-picker.Picker.InsertAfterPick": {
           "type": "string",
@@ -67,11 +65,11 @@
             "type": "string"
           },
           "default": [
-            "#RRGGBB!",
-            "!rgb(ri, gi, bi)",
-            "!hsl(hi0~360, s%, l%)"
+            "#RRGGBBAA!",
+            "!rgba({ri}, {gi}, {bi}, {af})",
+            "!hsla({hi:0~360}, {s%}, {l%}, {af})"
           ],
-          "markdownDescription": "When clicking the title of the popup picker, cycles through these labels (and the `#zeng-color-picker.Preview.InsertAfterPick#`).\n\nSame rule as `#zeng-color-picker.Preview.MatchPatterns#`."
+          "markdownDescription": "When clicked, the title of the popup picker cycles through these labels (and the `#zeng-color-picker.Preview.InsertAfterPick#`).\n\nSame rule as `#zeng-color-picker.Preview.MatchPatterns#`."
         }
       }
     }
@@ -93,7 +91,7 @@
     "eslint": "7.32.x",
     "glob": "7.1.x",
     "mocha": "9.1.x",
-    "typescript": "4.4.x"
+    "typescript": "^5.9.3"
   },
   "license": "See LICENSE.txt",
   "bugs": {

@@ -15,9 +15,9 @@ export function toast(message: string, ...items: string[]): void {
     }
 }
 
-function escapeRegExp(s: string): string {
+export function escapeRegExp(s: string): string {
     // $&: matched part
-    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace('!', '(?=(^|\\b|$))');
+    return s.replace(/[.*+?^$()|[\]\\]/g, '\\$&').replace('!', '(?:(?<=\\W)|(?=\\W))');
 }
 
 export type Component = {
@@ -29,7 +29,8 @@ export type Component = {
 
 export type Config = {
     detectors: string[],
-    detectRegexs: RegExp[],
+    detectRegexes: RegExp[],
+    detectRegexesWhole: RegExp[],
     components: Component[][], // paired with {detectors} and matched groups
     insertFormat: string,
     additionalLabels: string[],
@@ -37,7 +38,9 @@ export type Config = {
     files: string[],
 };
 
-const reDetector = /R+|G+|B+|A+|W+|H+|S+|L+|[rgbawhsl](?<type>[if%]+)((?<min>(\\\+|-)?[0-9]+(\\\.[0-9]+)?)~(?<max>(\\\+|-)?[0-9]+(\\\.[0-9]+)?))?/g;
+export const reDetector = /R+|G+|B+|A+|W+|H+|S+|L+|\s*\{[rgbawhsl](?<type>[if%]+)(:(?<min>(\\\+|-)?[0-9]+(\\\.[0-9]+)?)~(?<max>(\\\+|-)?[0-9]+(\\\.[0-9]+)?))?\}\s*/g;
+export const reInserter = /R+|G+|B+|A+|W+|H+|S+|L+|\{[rgbawhsl](?<type>[if%]+)(:(?<min>(\+|-)?[0-9]+(\.[0-9]+)?)~(?<max>(\+|-)?[0-9]+(\.[0-9]+)?))?\}/g;
+
 export function read(): Config {
     const cfg = vs.workspace.getConfiguration("zeng-color-picker");
     const detectors = cfg.get<string[]>("Preview.MatchPatterns") || [];
@@ -46,12 +49,14 @@ export function read(): Config {
     const langs = cfg.get<string>("Filter.ApplyForTheseLanguages") || "";
     const files = cfg.get<string>("Filter.ApplyForTheseFiles") || "";
 
-    let detectRegexs: RegExp[] = [];
+    let detectRegexes: RegExp[] = [];
+    let detectRegexesWhole: RegExp[] = [];
     let components: Component[][] = [];
     for (let i = 0; i < detectors.length; i++) {
         let cs: Component[] = components[i] = [];
-        const pattern = escapeRegExp(detectors[i]).replace(reDetector, (s, ...args) => {
-            if (!s) return s;
+        const dt = detectors[i];
+        let pattern = escapeRegExp(dt).replace(reDetector, (s, ...args) => {
+            s = s.replace(/^\s*{+|}+\s*$/g, '');
             let name = s[0];
             // hex
             if ('RGBAWHSL'.includes(name)) {
@@ -67,21 +72,23 @@ export function read(): Config {
                 max: parseFloat(g.max),
             } as Component;
             cs.push(c);
-            const fps = '[+-]?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?';
+            const fps = '(?:[+-]?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?|[+-]?\\.[0-9]+(?:[eE][+-]?[0-9]+)?)';
             if (c.type.includes('%')) { // (int | float)%
-                return `(${fps}%${c.type.length > 1 ? '?' : ''})`;
+                return `\\s*(${fps}%${c.type.length > 1 ? '?' : ''})\\s*`;
             } else if (c.type === 'i') { // int
-                return `([+-]?[0-9]+)`;
+                return `\\s*([+-]?[0-9]+)\\s*`;
             } else { // float
-                return `(${fps})`;
+                return `\\s*(${fps})\\s*`;
             }
         });
-        detectRegexs[i] = new RegExp(pattern, 'g');
+        detectRegexesWhole[i] = new RegExp(`^${pattern}$`);
+        detectRegexes[i] = new RegExp(pattern, 'g');
     }
 
     return {
         detectors: detectors,
-        detectRegexs: detectRegexs,
+        detectRegexes: detectRegexes,
+        detectRegexesWhole: detectRegexesWhole,
         components: components,
         insertFormat: insert,
         additionalLabels: labels,

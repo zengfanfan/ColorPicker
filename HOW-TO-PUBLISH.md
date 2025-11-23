@@ -3,12 +3,13 @@ Before you build, there are something you have to do.
 
 1. Install **Node.js** from: https://nodejs.org/ if not yet
 2. Node.js should cantains **npm**, if not, try re-install the newest Node.js
-3. Install **yarn**: `npm install -g yarn`
+3. Install **pnpm**: `npm install -g pnpm`
 4. Open cmd terminal, `cd` into project path (containning `package.json` file)
-5. Install **nrm**(npm registry manager): `npm install -g nrm`
-6. Change source to speed up installation: `nrm use taobao`
-7. Install necessary packages: `yarn`
-8. Install **vsce** and **tsc**: `npm install -g typescript @vscode/vsce`
+5. If you are in China:
+   1. Install **nrm**(npm registry manager): `pnpm install -g nrm`
+   2. Change source to speed up installation: `nrm use taobao`
+6. Install dependencies: `npm install` (do not use pnpm or yarn)
+7. Install **vsce** and **tsc**: `npm install -g typescript @vscode/vsce`
 
 ## PUBLISH to VSCode Marketplace
 https://marketplace.visualstudio.com/
