@@ -1,5 +1,20 @@
 import * as vs from 'vscode';
 
+export function float2str(v: number, precision: number = 2) {
+    return parseFloat(v.toFixed(precision)).toString();
+}
+
+export function isAnyNull(...args: any[]): boolean {
+    for (let i = 0; i < args.length; i++) {
+        if (args[i] === null) return true;
+    }
+    return false;
+}
+
+export function ifNaN(a: number, b: number): number {
+    return isNaN(a) ? b : a;
+}
+
 export class Color {
     private _r: number = 0;
     private _g: number = 0;
@@ -37,10 +52,10 @@ export class Color {
             this._b = r.blue;
             this._a = r.alpha;
         } else {
-            this._r = r || 0;
-            this._g = args[1] || 0;
-            this._b = args[2] || 0;
-            this._a = args[3] || 1;
+            this._r = r ?? 0;
+            this._g = args[1] ?? 0;
+            this._b = args[2] ?? 0;
+            this._a = args[3] ?? 1;
         }
         this.updateHSL();
     }

@@ -15,9 +15,10 @@ export function toast(message: string, ...items: string[]): void {
     }
 }
 
+const wordBoundary = '(?:(?<=[^\\w])|(?=[^\\w]))'; /* use [^\w] instead of \W, because upper W represents grayscale. */
 export function escapeRegExp(s: string): string {
     // $&: matched part
-    return s.replace(/[.*+?^$()|[\]\\]/g, '\\$&').replace('!', '(?:(?<=\\W)|(?=\\W))');
+    return s.replace(/[.*+?^$()|[\]\\]/g, '\\$&').replace('!', wordBoundary);
 }
 
 export type Component = {
@@ -33,7 +34,7 @@ export type Config = {
     detectRegexesWhole: RegExp[],
     components: Component[][], // paired with {detectors} and matched groups
     insertFormat: string,
-    additionalLabels: string[],
+    titles: string[],
     langs: string[],
     files: string[],
 };
@@ -43,11 +44,11 @@ export const reInserter = /R+|G+|B+|A+|W+|H+|S+|L+|\{[rgbawhsl](?<type>[if%]+)(:
 
 export function read(): Config {
     const cfg = vs.workspace.getConfiguration("zeng-color-picker");
-    const detectors = cfg.get<string[]>("Preview.MatchPatterns") || [];
-    const insert = cfg.get<string>("Picker.InsertAfterPick") || "";
-    const labels = cfg.get<string[]>("Picker.AdditionalLabels") || [];
-    const langs = cfg.get<string>("Filter.ApplyForTheseLanguages") || "";
-    const files = cfg.get<string>("Filter.ApplyForTheseFiles") || "";
+    const detectors = cfg.get<string[]>("Preview.MatchPatterns") ?? [];
+    const insert = cfg.get<string>("Picker.InsertAfterPick") ?? "";
+    const titles = cfg.get<string[]>("Picker.AdditionalLabels") ?? [];
+    const langs = cfg.get<string>("Filter.ApplyForTheseLanguages") ?? "";
+    const files = cfg.get<string>("Filter.ApplyForTheseFiles") ?? "";
 
     let detectRegexes: RegExp[] = [];
     let detectRegexesWhole: RegExp[] = [];
@@ -55,7 +56,7 @@ export function read(): Config {
     for (let i = 0; i < detectors.length; i++) {
         let cs: Component[] = components[i] = [];
         const dt = detectors[i];
-        let pattern = escapeRegExp(dt).replace(reDetector, (s, ...args) => {
+        let pattern = escapeRegExp(dt.replace(/^!+|!+$/, '')).replace(reDetector, (s, ...args) => {
             s = s.replace(/^\s*{+|}+\s*$/g, '');
             let name = s[0];
             // hex
@@ -82,16 +83,19 @@ export function read(): Config {
             }
         });
         detectRegexesWhole[i] = new RegExp(`^${pattern}$`);
+        if (dt.startsWith('!')) pattern = `${wordBoundary}${pattern}`;
+        if (dt.endsWith('!')) pattern = `${pattern}${wordBoundary}`;
         detectRegexes[i] = new RegExp(pattern, 'g');
     }
 
+    [''].concat(titles); // titles[0] is the guessed one
     return {
         detectors: detectors,
         detectRegexes: detectRegexes,
         detectRegexesWhole: detectRegexesWhole,
         components: components,
         insertFormat: insert,
-        additionalLabels: labels,
+        titles: titles,
         langs: langs.split(',').map(s => s.trim()).filter(s => s),
         files: files.split(',').map(s => s.trim()).filter(s => s),
     };

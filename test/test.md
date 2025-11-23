@@ -2,6 +2,62 @@
 
 ## Colors
 
+### Minimal Test
+
+1. #RGB!
+    + "#900" = dark red
+    +  #060  = dark green
+    + :#009, = dark blue
+    + (#f0f) = magenta
+    + {#ff0} = yellow
+    + <#0ff> = cyan
+2. #RGBA!
+    + #0f07 = dark green
+    + #f0f7 = dark magenta
+    + #f00f = red
+    + #0fff = cyan
+3. #RRGGBB!
+    + #ff0000 = red
+    + #00ff00 = green
+    + #0000ff = blue
+    + #00AEEF = light blue
+    + #8DC63F = light green
+    + #F26522 = orange (more red)
+    + #FFC20E = orange (more yellow)
+4. #RRGGBBAA!
+    + #00ff0077 = dark green
+    + #ff00ff77 = dark magenta
+    + #ff0000ff = red
+    + #00ffffff = cyan
+    + #00ffff00 = cyan
+5. !rgb({ri}, {gi}, {bi})
+    + rgb(153, 000, 000) = dark red
+    + !rgb(+00,+102,+00) = dark green
+    + rgb(00 , 00 , 153) = dark blue
+    + rgb(255, 000, 255) = magenta
+    + rgb(255, 255, 000) = yellow
+    + rgb(000, 255, 255) = cyan
+    + rgb{000, 255, 255} = invalid
+    + argb(00, 255, 255) = invalid
+    + rgb(-33, 000, 255) = invalid
+    + rgb(000, 256, 255) = invalid
+    + rgb(000, 250  255) = invalid
+    + rgb( 000 255 255 ) = invalid
+6. !rgba({ri}, {gi}, {bi}, {af})
+    + rgba(198, 36, 36, 1) = red
+    + rgba(255, 000, 000, 0.5) = dark red
+    + rgba(000, 255, 255, .99) = cyan
+    + rgba(255, 0, 255, .55) = dark magenta
+    + rgba(000, 255, 000, 1  ) = green
+    + rgba(255, 000, 255, 001) = magenta
+7. !hsl({hi:0~360}, {s%}, {l%})
+    + hsl(000, 100%, 027%) = dark red
+    + hsl(120, 100%, 020%) = dark green
+    + hsl(240, 100%, 033%) = dark blue
+    + hsl(288, 100%, 040%) = dark magenta
+    + hsl(048, 100%, 053%) = orange (more yellow)
+    + hsl(192, 100%, 053%) = light blue
+
 ### Hex
 
 #### RGBA
@@ -45,14 +101,14 @@
     + "ff00ff = cyan
     + :ffff00  = magenta
     +  00ffff, = yellow
-7. grey("W")
-    + grey("0") = black
-    + grey("f") = white
-    + grey("8") = 50% grey
-8. grey("WW")
-    + grey("0f") = black
-    + grey("f0") = white
-    + grey("aa") = 33% grey
+7. gray("W")
+    + gray("0") = black
+    + gray("f") = white
+    + gray("8") = 50% gray
+8. gray("WW")
+    + gray("0f") = black
+    + gray("f0") = white
+    + gray("aa") = 33% gray
 
 #### HSL
 
@@ -61,7 +117,7 @@
     + "#0f4" = hsl(000, 100%, 027%) = dark red
     +  #060  = hsl(000, 040%, 000%) = black
     +  #5f3  = hsl(120, 100%, 020%) = dark green
-    + :#009, = hsl(000, 000%, 060%) = grey
+    + :#009, = hsl(000, 000%, 060%) = gray
     + :#af5, = hsl(240, 100%, 033%) = dark blue
     + (#f0f) = hsl(360, 000%, 100%) = white
     + (#cf6) = hsl(288, 100%, 040%) = dark magenta
@@ -151,7 +207,7 @@
     + hsl(000, 255, 069) = dark red
     + hsl(000, 102, 000) = black
     + hsl(120, 255, 051) = dark green
-    + hsl(000, 000, 153) = grey
+    + hsl(000, 000, 153) = gray
     + hsl(240, 255, 084) = dark blue
     + hsl(360, 000, 255) = white
     + hsl(288, 255, 102) = dark magenta
@@ -214,7 +270,7 @@
     + hsl(1.0, 1, 0.27)  = dark red
     + hsl(1.0, 0.4, 0.0) = black
     + hsl(1.333, 1, 0.2) = dark green
-    + hsl(1.0, 0, 0.6)   = grey
+    + hsl(1.0, 0, 0.6)   = gray
     + hsl(1.66, 1, 0.33) = dark blue
     + hsl(2, 0, 1)       = white
     + hsl(1.8, 1, 0.53)  = dark magenta

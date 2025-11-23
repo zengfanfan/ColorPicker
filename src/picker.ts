@@ -1,23 +1,13 @@
 import * as vs from 'vscode';
 import * as config from './config';
+import * as util from './util';
 import { Color } from './util';
 
-let cfg: config.Config;
-
 type NullNum = number | null;
-function isAnyNull(...args: any[]): boolean {
-    for (let i = 0; i < args.length; i++) {
-        if (args[i] === null) return true;
-    }
-    return false;
-}
 
-const reInteger = /^[-+]?[0-9]+$/;
-
+let cfg: config.Config;
 let precision = 2;
-function float2str(v: number, precision: number = 3) {
-    return parseFloat(v.toFixed(precision)).toString();
-}
+const reInteger = /^[-+]?[0-9]+$/;
 
 //#region viewer (detect)
 
@@ -42,27 +32,27 @@ function match2color(match: RegExpExecArray, cs: config.Component[]): Color | nu
         } else {
             let [hit, f] = [false, parseFloat(v)];
             if (!hit && c.type.includes('%') && v.endsWith('%')) {// percentage
-                const min = c.min || 0;
-                const max = c.max || 100;
+                const min = util.ifNaN(c.min, 0);
+                const max = util.ifNaN(c.max, 100);
                 if (f >= min && f <= max) {
                     hit = true;
                     f /= 100.0;
                 }
             }
             if (!hit && c.type.includes('i') && v.match(reInteger)) {// integer
-                const min = c.min || 0;
-                const max = c.max || 255;
+                const min = util.ifNaN(c.min, 0);
+                const max = util.ifNaN(c.max, 255);
                 if (f >= min && f <= max) {
                     hit = true;
                     f = (f - min) / (max - min);
                 }
             }
             if (!hit && c.type.includes('f')) {// float
-                const min = c.min || 0;
-                const max = c.max || 1;
+                const min = util.ifNaN(c.min, 0);
+                const max = util.ifNaN(c.max, 1);
                 if (f >= min && f <= max) {
                     hit = true;
-                    precision = Math.max(precision, v.trim().split('.')[1]?.length || 0);
+                    precision = Math.max(precision, v.trim().split('.')[1]?.length ?? 0);
                     precision = Math.min(precision, 9);
                 }
             }
@@ -79,11 +69,11 @@ function match2color(match: RegExpExecArray, cs: config.Component[]): Color | nu
     }
 
     // 1: try rgb
-    if (!isAnyNull(r, g, b)) return new Color(r!, g!, b!, a);
+    if (!util.isAnyNull(r, g, b)) return new Color(r!, g!, b!, a);
     // 2: try hsl
-    if (!isAnyNull(h, s, l)) return Color.fromHSLA(h!, s!, l!, a);
+    if (!util.isAnyNull(h, s, l)) return Color.fromHSLA(h!, s!, l!, a);
     // 3: try gray
-    if (!isAnyNull(w)) return new Color(w!, w!, w!, a);
+    if (!util.isAnyNull(w)) return new Color(w!, w!, w!, a);
     // 4: fallback
     return new Color(0, 0, 0, a);
 }
@@ -96,7 +86,7 @@ function line2colorinfos(lineno: number, text: string): vs.ColorInformation[] {
         for (const match of text.matchAll(re)) {
             const color = match2color(match, cs);
             if (color === null) continue;
-            let from = match.index || 0;
+            let from = match.index ?? 0;
             ret.push(new vs.ColorInformation(
                 new vs.Range(lineno, from, lineno, from + match[0].length),
                 color.vscolor,
@@ -117,18 +107,18 @@ function isFormatMatched(match: RegExpMatchArray, cs: config.Component[]): boole
         if (c.type == 'hex') continue; // hex
         let f = parseFloat(v);
         if (c.type.includes('%') && v.endsWith('%')) {// percentage
-            const min = c.min || 0;
-            const max = c.max || 100;
+            const min = util.ifNaN(c.min, 0);
+            const max = util.ifNaN(c.max, 100);
             if (f >= min && f <= max) continue;
         }
         if (c.type.includes('i') && v.match(reInteger)) {// integer
-            const min = c.min || 0;
-            const max = c.max || 255;
+            const min = util.ifNaN(c.min, 0);
+            const max = util.ifNaN(c.max, 255);
             if (f >= min && f <= max) continue;
         }
         if (c.type.includes('f')) {// float
-            const min = c.min || 0;
-            const max = c.max || 1;
+            const min = util.ifNaN(c.min, 0);
+            const max = util.ifNaN(c.max, 1);
             if (f >= min && f <= max) continue;
         }
         return false;
@@ -185,17 +175,17 @@ function vscolor2str(color: Color, format: string): string {
         if (f != null) {
             let ret: string = '';
             if (c.type.includes('%')) { // percentage
-                const min = c.min || 0;
-                const max = c.max || 100;
+                const min = util.ifNaN(c.min, 0);
+                const max = util.ifNaN(c.max, 100);
                 ret = Math.round(f * (max - min) + min) + '%';
             } else if (c.type.includes('i')) { // integer
-                const min = c.min || 0;
-                const max = c.max || 255;
+                const min = util.ifNaN(c.min, 0);
+                const max = util.ifNaN(c.max, 255);
                 ret = Math.round(f * (max - min) + min).toString();
             } else if (c.type.includes('f')) { // float
-                const min = c.min || 0;
-                const max = c.max || 1;
-                ret = float2str(f * (max - min) + min, precision);
+                const min = util.ifNaN(c.min, 0);
+                const max = util.ifNaN(c.max, 1);
+                ret = util.float2str(f * (max - min) + min, precision);
             }
             if (ret) return ret;
         }
@@ -210,8 +200,8 @@ class ColorProvider implements vs.DocumentColorProvider {
     private from = 0;
     private to = Infinity;
     constructor(from?: number, to?: number) { // from & to: lineno, specify ranges
-        this.from = from || this.from;
-        this.to = to || this.to;
+        this.from = from ?? this.from;
+        this.to = to ?? this.to;
     }
 
     // preview color in the editor
@@ -221,7 +211,7 @@ class ColorProvider implements vs.DocumentColorProvider {
     ): vs.ProviderResult<vs.ColorInformation[]> {
         let colors: vs.ColorInformation[] = [];
         for (let i = 0; i < document.lineCount; ++i) {
-            if (i > this.from && i < this.to) {
+            if (i >= this.from && i <= this.to) {
                 let line = document.lineAt(i).text;
                 colors = colors.concat(line2colorinfos(i, line));
             }
@@ -239,12 +229,13 @@ class ColorProvider implements vs.DocumentColorProvider {
         let insertFormat = cfg.insertFormat;
         if (!insertFormat.trim()) {
             let text = context.document.getText(context.range);
-            insertFormat = guessInsertFormat(text) || cfg.insertFormat;
+            insertFormat = guessInsertFormat(text) ?? cfg.insertFormat;
         }
 
-        const labels = [insertFormat].concat(cfg.additionalLabels);
+        if (!cfg.titles.includes(insertFormat)) cfg.titles[0] = insertFormat;
+
         const color = new Color(vscolor);
-        for (const label of labels) {
+        for (const label of cfg.titles) {
             const str = vscolor2str(color, label);
             if (str) presentations.push(str);
         }
@@ -258,7 +249,8 @@ class ColorProvider implements vs.DocumentColorProvider {
 let listener0: vs.Disposable;
 let listener1: vs.Disposable;
 let listeners: vs.Disposable[] = [];
-const ANTI_SHAKE = 4;
+const ANTI_SHAKE = 3;
+const EXTRA_LINE = ANTI_SHAKE * 3;
 let lastVisibleStart = -ANTI_SHAKE - 999;
 let lastActiveEditor: vs.TextEditor | undefined = undefined;
 
@@ -274,18 +266,14 @@ function updateColorProvider(force: boolean = false) {
     if (!range0 || !rangeN) return;
 
     const from = range0.start.line, to = rangeN.end.line;
-    if (!force && Math.abs(from - lastVisibleStart) < ANTI_SHAKE / 2) return;
+    if (!force && Math.abs(from - lastVisibleStart) < ANTI_SHAKE) return;
     lastVisibleStart = from;
 
     // to update(repaint) ui: re-register color provider
-    for (const listener of listeners) {
-        listener.dispose();
-    }
+    for (const listener of listeners) listener.dispose();
     listeners = [];
-    let cp = new ColorProvider(from - ANTI_SHAKE, to + ANTI_SHAKE);
-    for (const file of cfg.files) {
-        listeners.push(vs.languages.registerColorProvider({ pattern: file }, cp));
-    }
+    let cp = new ColorProvider(from - EXTRA_LINE, to + EXTRA_LINE);
+    for (const file of cfg.files) listeners.push(vs.languages.registerColorProvider({ pattern: file }, cp));
     listeners.push(vs.languages.registerColorProvider(cfg.langs, cp));
 }
 

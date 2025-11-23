@@ -1,5 +1,9 @@
 {
-    "zeng-color-picker.Picker.AdditionalLabels": [],
+    "zeng-color-picker.Picker.AdditionalLabels": [
+        "#RRGGBBAA!",
+        "!rgba({ri}, {gi}, {bi}, {af})",
+        "!hsla({hi:0~360}, {s%}, {l%}, {af})",
+    ],
     "zeng-color-picker.Filter.ApplyForTheseLanguages": "markdown",
     "zeng-color-picker.Filter.ApplyForTheseFiles": "**/*.txt",
     "zeng-color-picker.Preview.MatchPatterns": [
