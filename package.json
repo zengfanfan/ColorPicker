@@ -48,6 +48,7 @@
           "default": [
             "#RRGGBB!",
             "#RGB!",
+            "#RRGGBBAA!",
             "!rgba({ri}, {gi}, {bi}, {af})",
             "!hsla({hi:0~360}, {s%}, {l%}, {af})",
             "gray(\"W\")"
@@ -69,7 +70,7 @@
             "!rgba({ri}, {gi}, {bi}, {af})",
             "!hsla({hi:0~360}, {s%}, {l%}, {af})"
           ],
-          "markdownDescription": "When clicked, the title of the popup picker cycles through these labels (and the `#zeng-color-picker.Preview.InsertAfterPick#`).\n\nSame rule as `#zeng-color-picker.Preview.MatchPatterns#`."
+          "markdownDescription": "When clicked, the title of the popup picker cycles through these labels (in addition to `#zeng-color-picker.Preview.InsertAfterPick#`).\n\nSame rule as `#zeng-color-picker.Preview.MatchPatterns#`."
         }
       }
     }

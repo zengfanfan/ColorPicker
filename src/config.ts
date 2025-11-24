@@ -88,7 +88,6 @@ export function read(): Config {
         detectRegexes[i] = new RegExp(pattern, 'g');
     }
 
-    [''].concat(titles); // titles[0] is the guessed one
     return {
         detectors: detectors,
         detectRegexes: detectRegexes,

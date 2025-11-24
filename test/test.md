@@ -44,12 +44,12 @@
     + rgb(000, 250  255) = invalid
     + rgb( 000 255 255 ) = invalid
 6. !rgba({ri}, {gi}, {bi}, {af})
-    + rgba(198, 36, 36, 1) = red
-    + rgba(255, 000, 000, 0.5) = dark red
-    + rgba(000, 255, 255, .99) = cyan
+    + rgba(198, 36, 36, 001) = red
+    + rgba(255, 000, 00,0.5) = dark red
+    + rgba(0, 255, 255, .99) = cyan
     + rgba(255, 0, 255, .55) = dark magenta
-    + rgba(000, 255, 000, 1  ) = green
-    + rgba(255, 000, 255, 001) = magenta
+    + rgba(000, 255, 00, 1 ) = green
+    + rgba(255, 00, 255, 01) = magenta
 7. !hsl({hi:0~360}, {s%}, {l%})
     + hsl(000, 100%, 027%) = dark red
     + hsl(120, 100%, 020%) = dark green

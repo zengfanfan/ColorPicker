@@ -220,27 +220,45 @@ class ColorProvider implements vs.DocumentColorProvider {
     }
 
     // insert string after pick
+    private cacheInsert: {
+        file: string,
+        pos: vs.Position,
+        fmts: string[]
+    } | null = null;
     provideColorPresentations(
         vscolor: vs.Color,
         context: { document: vs.TextDocument, range: vs.Range },
         token: vs.CancellationToken
     ): vs.ProviderResult<vs.ColorPresentation[]> {
-        let presentations: string[] = []; // switch lables when clicking the title of picker
+        const [doc, range] = [context.document, context.range];
+        const presentations: vs.ColorPresentation[] = []; // cycle through these when clicking the title of picker
+
         let insertFormat = cfg.insertFormat;
         if (!insertFormat.trim()) {
-            let text = context.document.getText(context.range);
-            insertFormat = guessInsertFormat(text) ?? cfg.insertFormat;
+            let text = doc.getText(range);
+            insertFormat = guessInsertFormat(text) ?? insertFormat;
         }
 
-        if (!cfg.titles.includes(insertFormat)) cfg.titles[0] = insertFormat;
+        let lables = [insertFormat].concat(cfg.titles);
+        let cache = this.cacheInsert;
+        if (cache && doc.fileName == cache.file && range.start.isEqual(cache.pos) && cache.fmts.length > 0) {
+            lables = cache.fmts;
+        } else cache = {
+            file: doc.fileName,
+            pos: range.start,
+            fmts: lables,
+        };
 
         const color = new Color(vscolor);
-        for (const label of cfg.titles) {
+        for (const label of lables) {
             const str = vscolor2str(color, label);
-            if (str) presentations.push(str);
+            if (str) presentations.push(Object.assign(new vs.ColorPresentation(str), {
+                label: config.release ? str : label,
+                textEdit: vs.TextEdit.replace(context.range, str),
+            }));
         }
 
-        return presentations.map(p => new vs.ColorPresentation(p));
+        return presentations;
     }
 }
 

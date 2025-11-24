@@ -9,5 +9,12 @@
     "zeng-color-picker.Preview.MatchPatterns": [
         "@RRGGBB@",
         "#RRGGBB!",
+        "#RGB!",
+        "#RGBA!",
+        "#RRGGBBAA!",
+        "!rgb({ri}, {gi}, {bi})",
+        "!rgba({ri}, {gi}, {bi}, {af})",
+        "!hsl({hi:0~360}, {s%}, {l%})",
+        "!hsla({hi:0~360}, {s%}, {l%}, {af})",
     ],
 }
