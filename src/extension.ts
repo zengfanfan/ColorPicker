@@ -12,7 +12,7 @@ export function activate(context: vs.ExtensionContext) {
 	config.toast(config.name + " is active.");
 	picker.activate();
 	// Apply settings as soon as changed.
-	let dispose = vs.workspace.onDidChangeConfiguration(() => {
+	const dispose = vs.workspace.onDidChangeConfiguration(() => {
 		picker.deactivate();
 		picker.activate();
 	});

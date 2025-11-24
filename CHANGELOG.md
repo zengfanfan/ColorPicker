@@ -5,6 +5,7 @@ All notable changes to the extension will be documented in this file.
 ### 1.2.0 - 2025-11-21
 
 1. Provide settings for integer(0-255), float(0.0-1.0) and percentage(0%-100%)
+2. Use `{%xx}` to indicate an ASCII character.
 
 ### 1.1.0 - 2025-8-11
 

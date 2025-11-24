@@ -20,7 +20,7 @@ function match2color(match: RegExpExecArray, cs: config.Component[]): Color | nu
         const v = match[i + 1];
         if (!v) return null;
         if (c.type == 'hex') {
-            let f = parseInt(v.length == 1 ? v.repeat(2) : v, 16) / 255.0;
+            const f = parseInt(v.length == 1 ? v.repeat(2) : v, 16) / 255.0;
             /**/ if (c.name === 'R') r = f;
             else if (c.name === 'G') g = f;
             else if (c.name === 'B') b = f;
@@ -79,14 +79,14 @@ function match2color(match: RegExpExecArray, cs: config.Component[]): Color | nu
 }
 
 function line2colorinfos(lineno: number, text: string): vs.ColorInformation[] {
-    let ret: vs.ColorInformation[] = [];
+    const ret: vs.ColorInformation[] = [];
     for (let i = 0; i < cfg.detectors.length; i++) {
         const re = cfg.detectRegexes[i];
         const cs = cfg.components[i];
         for (const match of text.matchAll(re)) {
             const color = match2color(match, cs);
             if (color === null) continue;
-            let from = match.index ?? 0;
+            const from = match.index ?? 0;
             ret.push(new vs.ColorInformation(
                 new vs.Range(lineno, from, lineno, from + match[0].length),
                 color.vscolor,
@@ -105,7 +105,7 @@ function isFormatMatched(match: RegExpMatchArray, cs: config.Component[]): boole
         const v = match[i + 1];
         if (!v) return false;
         if (c.type == 'hex') continue; // hex
-        let f = parseFloat(v);
+        const f = parseFloat(v);
         if (c.type.includes('%') && v.endsWith('%')) {// percentage
             const min = util.ifNaN(c.min, 0);
             const max = util.ifNaN(c.max, 100);
@@ -139,9 +139,17 @@ function guessInsertFormat(text: string): string | null {
 }
 
 function vscolor2str(color: Color, format: string): string {
-    return format.replaceAll('!', '').replace(config.reInserter, (v, ...args) => {
+    return format.replace(config.reInserter, (v, ...args) => {
         v = v.replace(/^\s*{+|}+\s*$/g, '');
-        let name = v[0];
+        const name = v[0];
+        // word boundary
+        if (v === '!') return '';
+        // ascii
+        if (name === '%') {
+            const ascii = parseInt(v.slice(1), 16);
+            const char = String.fromCharCode(ascii);
+            return char;
+        }
         // hex
         if ('RGBAWHSL'.includes(name)) {
             const onechar = v.length == 1;
@@ -173,7 +181,7 @@ function vscolor2str(color: Color, format: string): string {
         else if (name == 's') f = color.s;
         else if (name == 'l') f = color.l;
         if (f != null) {
-            let ret: string = '';
+            let ret = '';
             if (c.type.includes('%')) { // percentage
                 const min = util.ifNaN(c.min, 0);
                 const max = util.ifNaN(c.max, 100);
@@ -199,6 +207,7 @@ function vscolor2str(color: Color, format: string): string {
 class ColorProvider implements vs.DocumentColorProvider {
     private from = 0;
     private to = Infinity;
+    private id = 0;
     constructor(from?: number, to?: number) { // from & to: lineno, specify ranges
         this.from = from ?? this.from;
         this.to = to ?? this.to;
@@ -209,14 +218,14 @@ class ColorProvider implements vs.DocumentColorProvider {
         document: vs.TextDocument,
         token: vs.CancellationToken
     ): vs.ProviderResult<vs.ColorInformation[]> {
-        let colors: vs.ColorInformation[] = [];
+        const colors: vs.ColorInformation[][] = [];
         for (let i = 0; i < document.lineCount; ++i) {
             if (i >= this.from && i <= this.to) {
-                let line = document.lineAt(i).text;
-                colors = colors.concat(line2colorinfos(i, line));
+                const line = document.lineAt(i).text;
+                colors.push(line2colorinfos(i, line));
             }
         }
-        return colors; // <= 500, see https://github.com/microsoft/vscode/issues/44615#issuecomment-396497187
+        return colors.flat(); // <= 500, see https://github.com/microsoft/vscode/issues/44615#issuecomment-396497187
     }
 
     // insert string after pick
@@ -232,29 +241,34 @@ class ColorProvider implements vs.DocumentColorProvider {
     ): vs.ProviderResult<vs.ColorPresentation[]> {
         const [doc, range] = [context.document, context.range];
         const presentations: vs.ColorPresentation[] = []; // cycle through these when clicking the title of picker
+        // config.debug(`[provideColorPresentations] ${range} ${doc.fileName}`);
 
         let insertFormat = cfg.insertFormat;
         if (!insertFormat.trim()) {
             let text = doc.getText(range);
             insertFormat = guessInsertFormat(text) ?? insertFormat;
+            // config.debug(`  guess: ${text} => ${insertFormat}`);
         }
 
-        let lables = [insertFormat].concat(cfg.titles);
-        let cache = this.cacheInsert;
-        if (cache && doc.fileName == cache.file && range.start.isEqual(cache.pos) && cache.fmts.length > 0) {
-            lables = cache.fmts;
-        } else cache = {
+        let lables = [insertFormat, ...cfg.titles];
+        const cache = this.cacheInsert;
+        const cacheIndex = cache?.fmts.indexOf(insertFormat) ?? -1;
+        if (cache && doc.fileName == cache.file && range.start.isEqual(cache.pos) && cacheIndex >= 0) {
+            // config.debug(`  hit! cache: ${cache.fmts}`);
+            lables = cache.fmts.slice();
+        } else this.cacheInsert = {
             file: doc.fileName,
-            pos: range.start,
-            fmts: lables,
+            pos: range.start.with(), // clone
+            fmts: lables.slice(), // clone
         };
 
         const color = new Color(vscolor);
         for (const label of lables) {
             const str = vscolor2str(color, label);
+            // config.debug(`  ${color.hex} + ${label} => ${str}`);
             if (str) presentations.push(Object.assign(new vs.ColorPresentation(str), {
                 label: config.release ? str : label,
-                textEdit: vs.TextEdit.replace(context.range, str),
+                textEdit: vs.TextEdit.replace(range, str),
             }));
         }
 
@@ -279,7 +293,7 @@ function updateColorProvider(force: boolean = false) {
         force = true;
     }
 
-    let ranges = aEditor?.visibleRanges ?? [];
+    const ranges = aEditor?.visibleRanges ?? [];
     const range0 = ranges[0], rangeN = ranges[ranges.length - 1];
     if (!range0 || !rangeN) return;
 
@@ -290,7 +304,7 @@ function updateColorProvider(force: boolean = false) {
     // to update(repaint) ui: re-register color provider
     for (const listener of listeners) listener.dispose();
     listeners = [];
-    let cp = new ColorProvider(from - EXTRA_LINE, to + EXTRA_LINE);
+    const cp = new ColorProvider(from - EXTRA_LINE, to + EXTRA_LINE);
     for (const file of cfg.files) listeners.push(vs.languages.registerColorProvider({ pattern: file }, cp));
     listeners.push(vs.languages.registerColorProvider(cfg.langs, cp));
 }
@@ -298,9 +312,9 @@ function updateColorProvider(force: boolean = false) {
 const UPDATE_MIN_INTERVAL = 50; // ms
 const UPDATE_MAX_INTERVAL = 1000; // ms
 const UPDATE_DURATION = 3000; // ms
-let changedTime: number = UPDATE_DURATION; // ms since 1970-1-1
-let lastUpdateTime: number = 0; // ms since 1970-1-1
-let updateTimer: number = -1;
+let changedTime = UPDATE_DURATION; // ms since 1970-1-1
+let lastUpdateTime = 0; // ms since 1970-1-1
+let updateTimer = -1;
 function onUpdateTimer() {
     const now = Date.now();
     if (updateTimer < 0) return;
@@ -324,7 +338,7 @@ export function activate() {
      * An Event which fires when the visible ranges of an editor has changed.
      */
     listener0 = vs.window.onDidChangeTextEditorVisibleRanges((event) => {
-        let editor = event.textEditor;
+        const editor = event.textEditor;
         // file filter
         let matched = vs.languages.match(cfg.langs, editor.document) > 0;
         for (const file of cfg.files) {

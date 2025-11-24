@@ -2,11 +2,14 @@ import * as vs from 'vscode';
 
 export const name = "Zeng's Color-picker";
 export const id = "zeng-color-picker";
-export const release = false;// turn on(false) or off(true) debug message
+export const release = true;// turn on(false) or off(true) debug message
 
 export function debug(message?: any, ...optionalParams: any[]): void {
     if (!release) {
-        console.log(message, ...optionalParams);
+        const d = new Date();
+        const pad = (n: number, len = 2) => n.toString().padStart(len, "0");
+        const ts = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${pad(d.getMilliseconds(), 3)}`;
+        console.log(`[${ts}]`, message, ...optionalParams);
     }
 }
 export function toast(message: string, ...items: string[]): void {
@@ -16,9 +19,9 @@ export function toast(message: string, ...items: string[]): void {
 }
 
 const wordBoundary = '(?:(?<=[^\\w])|(?=[^\\w]))'; /* use [^\w] instead of \W, because upper W represents grayscale. */
-export function escapeRegExp(s: string): string {
+function escapeRegExp(s: string): string {
     // $&: matched part
-    return s.replace(/[.*+?^$()|[\]\\]/g, '\\$&').replace('!', wordBoundary);
+    return s.replace(/[.*+?^$()|\[\]\\]/g, '\\$&');
 }
 
 export type Component = {
@@ -39,8 +42,8 @@ export type Config = {
     files: string[],
 };
 
-export const reDetector = /R+|G+|B+|A+|W+|H+|S+|L+|\s*\{[rgbawhsl](?<type>[if%]+)(:(?<min>(\\\+|-)?[0-9]+(\\\.[0-9]+)?)~(?<max>(\\\+|-)?[0-9]+(\\\.[0-9]+)?))?\}\s*/g;
-export const reInserter = /R+|G+|B+|A+|W+|H+|S+|L+|\{[rgbawhsl](?<type>[if%]+)(:(?<min>(\+|-)?[0-9]+(\.[0-9]+)?)~(?<max>(\+|-)?[0-9]+(\.[0-9]+)?))?\}/g;
+export const reDetector = /!|\{%[0-9a-fA-F]{2}\}|R+|G+|B+|A+|W+|H+|S+|L+|\s*\{[rgbawhsl](?<type>[if%]+)(:(?<min>(\\\+|-)?[0-9]+(\\\.[0-9]+)?)~(?<max>(\\\+|-)?[0-9]+(\\\.[0-9]+)?))?\}\s*/g;
+export const reInserter = /!|\{%[0-9a-fA-F]{2}\}|R+|G+|B+|A+|W+|H+|S+|L+|\{[rgbawhsl](?<type>[if%]+)(:(?<min>(\+|-)?[0-9]+(\.[0-9]+)?)~(?<max>(\+|-)?[0-9]+(\.[0-9]+)?))?\}/g;
 
 export function read(): Config {
     const cfg = vs.workspace.getConfiguration("zeng-color-picker");
@@ -50,15 +53,23 @@ export function read(): Config {
     const langs = cfg.get<string>("Filter.ApplyForTheseLanguages") ?? "";
     const files = cfg.get<string>("Filter.ApplyForTheseFiles") ?? "";
 
-    let detectRegexes: RegExp[] = [];
-    let detectRegexesWhole: RegExp[] = [];
-    let components: Component[][] = [];
+    const detectRegexes: RegExp[] = [];
+    const detectRegexesWhole: RegExp[] = [];
+    const components: Component[][] = [];
     for (let i = 0; i < detectors.length; i++) {
-        let cs: Component[] = components[i] = [];
+        const cs: Component[] = components[i] = [];
         const dt = detectors[i];
         let pattern = escapeRegExp(dt.replace(/^!+|!+$/, '')).replace(reDetector, (s, ...args) => {
             s = s.replace(/^\s*{+|}+\s*$/g, '');
-            let name = s[0];
+            const name = s[0];
+            // word boundary
+            if (s === '!') return wordBoundary;
+            // ascii
+            if (name === '%') {
+                const ascii = parseInt(s.slice(1), 16);
+                const char = String.fromCharCode(ascii);
+                return escapeRegExp(char);
+            }
             // hex
             if ('RGBAWHSL'.includes(name)) {
                 cs.push({ name: name, type: 'hex', min: NaN, max: NaN });

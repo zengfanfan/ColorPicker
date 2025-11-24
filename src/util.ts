@@ -133,6 +133,7 @@ export class Color {
     * 0.0 => 0/00, 0.5 => 8/88, 1.0 => F/FF
     *
     * @param   {number}  value     The float value
+    * @param   {boolean}  onechar  One char (or two chars)
     * @return  {string}            The hex string
     */
     static float2hex(value: number, onechar: boolean): string {
@@ -141,8 +142,7 @@ export class Color {
     }
 
     static rgba2gray(r: number, g: number, b: number): number {
-        let gray = r * 0.3 + g * 0.59 + b * 0.11;
-        return gray;
+        return r * 0.3 + g * 0.59 + b * 0.11;
     }
 
     /**
@@ -159,8 +159,8 @@ export class Color {
     * @return  {Array}           The RGB representation
     */
     static hsl2rgb(h: number, s: number, l: number): [number, number, number] {
-        let a: number = s * Math.min(l, 1 - l);
-        let f = (n: number, k = (n + h * 12) % 12) => l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+        const a = s * Math.min(l, 1 - l);
+        const f = (n: number, k = (n + h * 12) % 12) => l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
         return [f(0), f(8), f(4)];
     }
 
@@ -178,8 +178,8 @@ export class Color {
     * @return  {Array}           The HSL representation
     */
     static rgb2hsl(r: number, g: number, b: number): [number, number, number] {
-        let a = Math.max(r, g, b), n = a - Math.min(r, g, b), f = (1 - Math.abs(a + a - n - 1));
-        let h = n && ((a == r) ? (g - b) / n : ((a == g) ? 2 + (b - r) / n : 4 + (r - g) / n));
+        const a = Math.max(r, g, b), n = a - Math.min(r, g, b), f = (1 - Math.abs(a + a - n - 1));
+        const h = n && ((a == r) ? (g - b) / n : ((a == g) ? 2 + (b - r) / n : 4 + (r - g) / n));
         return [(h < 0 ? h + 6 : h) / 6, f ? n / f : 0, (a + a - n) / 2];
     }
 
