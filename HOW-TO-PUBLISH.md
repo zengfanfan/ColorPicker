@@ -16,9 +16,9 @@ https://marketplace.visualstudio.com/
 
 1. BUILD the package: `vsce package`
    - may have to install vsce first: npm i vsce -g
-2. Create a personal access token (or reusable an unexpired one), go https://aka.ms/SignupAzureDevOps go create one, choosing "All accessible organizations" and "Full access" when creating.
+2. Create a personal access token (or reusable an unexpired one), go [here](https://aka.ms/SignupAzureDevOps) or [here](https://dev.azure.com/zengfanfan/_usersSettings/tokens) to create one, choosing "All accessible organizations" and "Full access" when creating.
 3. if you don't have a publisher, create one: https://marketplace.visualstudio.com/manage
-4. LOGIN: `vsce login <publisher-name>`
+4. LOGIN: `vsce login <publisher-name>`, then paste the token when asked.
 5. PUBLISH: `vsce publish`
    - publish minor version: vsce publish minor (autoincrease 1.0.2 -> 1.1.0)
    - publish patch version: vsce publish patch (autoincrease 1.0.2 -> 1.0.3)
